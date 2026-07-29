@@ -1,0 +1,28 @@
+# ctOS · i3 config (X11 fallback for hardware without a Wayland session).
+# Install to ~/.config/i3/config. Requires: i3, i3lock, a terminal, chromium.
+# The dashboard server: systemctl --user start ctos.service
+
+set $mod Mod4
+font pango:monospace 10
+
+# ctOS colors:            border   bg       text     indicator child_border
+client.focused          #00e5ff #050809 #cfeef2 #00e5ff  #00e5ff
+client.focused_inactive #0a8ea3 #050809 #5c7d84 #0a8ea3  #0a8ea3
+client.unfocused        #12333a #050809 #5c7d84 #12333a  #12333a
+client.urgent           #ff3b30 #050809 #cfeef2 #ff3b30  #ff3b30
+
+gaps inner 6
+gaps outer 8
+default_border pixel 2
+
+# Autostart: dashboard server + kiosk browser
+exec --no-startup-id systemctl --user start ctos.service
+exec --no-startup-id ~/.config/ctos/launch-ctos.sh
+
+# Keybinds
+bindsym $mod+Return exec i3-sensible-terminal
+bindsym $mod+q kill
+bindsym $mod+f fullscreen toggle
+bindsym $mod+l exec i3lock -c 050809
+bindsym $mod+r exec ~/.config/ctos/launch-ctos.sh
+bindsym $mod+Shift+e exit

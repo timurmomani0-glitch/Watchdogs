@@ -55,6 +55,8 @@ body {
   96% { transform: translate(2px, -1px); clip-path: inset(60% 0 10% 0); }
 }
 .sub { color: var(--muted); font-size: 11px; letter-spacing: 0.1em; }
+.hud-right { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.clock { font-size: 19px; color: var(--cyan); letter-spacing: 0.18em; text-shadow: 0 0 10px #00e5ff66; font-variant-numeric: tabular-nums; }
 .sysline { color: var(--cyan-dim); font-size: 11px; text-align: right; white-space: pre; }
 
 .demo-banner {
