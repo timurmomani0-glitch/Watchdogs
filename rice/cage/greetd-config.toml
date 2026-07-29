@@ -1,0 +1,21 @@
+# ctOS dedicated-kiosk boot: greetd auto-logs a user into a `cage` session that
+# shows ONLY the dashboard fullscreen. For a wall-mounted / dedicated ctOS screen.
+#
+# Install: place at /etc/greetd/config.toml, replace USER, enable greetd.
+#   sudo cp greetd-config.toml /etc/greetd/config.toml   # edit USER first
+#   sudo systemctl enable greetd
+# Prereqs: greetd + cage installed; the dashboard server running as a service.
+#   Run the server as the same USER and enable lingering so it survives:
+#   systemctl --user enable ctos.service && loginctl enable-linger USER
+# (cage is a single-app Wayland kiosk compositor.)
+
+[terminal]
+vt = 1
+
+[initial_session]
+command = "cage -s -- /home/USER/.config/ctos/launch-ctos.sh"
+user = "USER"
+
+[default_session]
+command = "cage -s -- /home/USER/.config/ctos/launch-ctos.sh"
+user = "USER"

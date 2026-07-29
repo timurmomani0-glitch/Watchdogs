@@ -176,6 +176,13 @@ function pushWaterfall(p) {
   for (let i = 0; i < p.bins; i++) { ctx.fillStyle = powerColor(p.row[i]); ctx.fillRect(i * cw, 0, cw + 1, 1); }
 }
 
+// ── HUD clock (desktop-shell feel) ───────────────────────────────────────────
+function tickClock() {
+  const c = $('#clock');
+  if (c) c.textContent = new Date().toLocaleTimeString([], { hour12: false });
+}
+setInterval(tickClock, 1000); tickClock();
+
 // ── Boot ─────────────────────────────────────────────────────────────────────
 connect();
 loadSystem(); loadDevices(); loadFinance(); loadAudit();
