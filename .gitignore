@@ -1,0 +1,11 @@
+node_modules/
+*.log
+.env
+.DS_Store
+
+# Local, private, never-commit config: your real owned-asset registry and audit trail.
+config/owned-assets.yaml
+config/jurisdiction.yaml
+config/audit.key
+data/audit.log
+data/*.local.*

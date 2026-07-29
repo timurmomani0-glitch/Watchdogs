@@ -1,0 +1,71 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# OWNED-ASSET REGISTRY  —  the single source of truth for scope.
+#
+# Every command the dashboard issues is validated against THIS file before it
+# executes. A target that is not listed here is denied and logged. There is no
+# convenience override. This is the enforced legal boundary of the whole system.
+#
+# Copy this file to  config/owned-assets.yaml  (gitignored) and fill in ONLY
+# assets you own or are authorized in writing to control.
+# ─────────────────────────────────────────────────────────────────────────────
+
+owner: "CHANGE-ME"                 # your name; stamped into every audit entry
+
+# Networks (CIDRs) you administer. Host-class actions (scan/ssh) must resolve
+# to an IP inside one of these ranges or they are denied.
+networks:
+  - cidr: "192.168.1.0/24"
+    label: "home-lan"
+    controls_dhcp: true            # informational: do you run DHCP/DNS here?
+  # - cidr: "10.10.20.0/24"
+  #   label: "iot-vlan"
+
+# Individual devices. `id` is the match key. Use MAC for hosts, the Home
+# Assistant entity_id for HA devices (prefixed `ha:`), etc.
+devices:
+  - id: "aa:bb:cc:dd:ee:01"
+    label: "my-nas"
+    kind: "host"                   # host | homeassistant | camera | sensor
+  - id: "ha:switch.office_lamp"
+    label: "office lamp"
+    kind: "homeassistant"
+  - id: "ha:light.living_room"
+    label: "living room lights"
+    kind: "homeassistant"
+
+# Hosts you can control over SSH. `host` must resolve into a network CIDR above.
+hosts:
+  - host: "192.168.1.10"
+    user: "admin"
+    label: "my-nas"
+  - host: "192.168.1.11"
+    user: "pi"
+    label: "home-base-pi"
+
+# RFID / NFC card UIDs you physically own. Emulation is gated additionally by
+# the jurisdiction profile (rfid_emulation_allowed).
+rfid:
+  - uid: "04A1B2C3"
+    label: "my-office-badge"
+  - uid: "1234ABCD"
+    label: "my-apartment-fob"
+
+# Radio. RX is unrestricted (listening to your own spectrum is legal everywhere).
+# TX bands are the ONLY frequencies the system will ever key up on, and they must
+# also be permitted by the jurisdiction profile. Values below are US Part 15 ISM.
+rf:
+  rx_unrestricted: true
+  tx_bands:
+    - { center_hz: 433920000, bandwidth_hz: 250000, max_erp_dbm: 10, note: "433 MHz ISM (Part 15)" }
+    - { center_hz: 915000000, bandwidth_hz: 500000, max_erp_dbm: 30, note: "915 MHz ISM (Part 15)" }
+
+# Financial / cloud accounts read through an official aggregation API with YOUR
+# OWN credentials. `id` is what the finance panel references; secrets live in
+# environment variables, never here.
+accounts:
+  - id: "acct:checking"
+    provider: "plaid"              # plaid | teller | truelayer | nordigen
+    label: "primary checking"
+  - id: "acct:cloud-vps"
+    provider: "self"
+    label: "my hetzner vps"

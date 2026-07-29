@@ -1,0 +1,42 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# JURISDICTION PROFILE  —  toggles AMBER (jurisdiction-dependent) capabilities.
+#
+# AMBER features stay OFF unless this file explicitly permits them AND the target
+# is in the owned-asset registry. This profile is pre-filled for: UNITED STATES.
+# Copy to  config/jurisdiction.yaml  (gitignored) and verify against current law.
+# ─────────────────────────────────────────────────────────────────────────────
+
+country: "US"
+regulator: "FCC"
+
+# Software-defined radio.
+# RX (receiving/decoding your own signals) is always allowed.
+# TX is limited to license-free bands at legal power. RTL-SDR is RX-ONLY hardware
+# regardless of this flag; TX only becomes possible with a HackRF-class radio.
+rf:
+  rx_allowed: true
+  tx_allowed: true                 # US: Part 15 license-free ISM only
+  tx_reference: "47 CFR Part 15 (ISM 433/915 MHz, 2.4 GHz)"
+  # The union of these bands and the registry rf.tx_bands is what may be keyed up.
+
+# RFID / NFC emulation. US: emulating cards you OWN is legal. Emulating someone
+# else's card is not, and the registry (rfid[]) is what enforces "yours".
+rfid_emulation_allowed: true
+
+# Camera / microphone. Any lens or mic that could capture a person who has not
+# consented is gated behind an explicit per-action confirmation.
+camera_mic:
+  recording_allowed: true
+  consent_rule: "US: one-party consent federally; some states (CA, FL, IL, PA,
+    WA, MD, MA, MT, NH, CT, DE, OR) require all-party consent for audio.
+    Confirm your state before enabling audio capture."
+  require_confirmation: true       # UI forces a confirm step for camera/mic view
+
+# Drones. Not wired to the rig by default; reference only.
+drone:
+  framework: "FAA — recreational (49 USC 44809) or Part 107 for commercial"
+  require_registration_over_g: 250
+
+# Master AMBER switch. If false, ALL jurisdiction-dependent features are disabled
+# regardless of the toggles above. Flip individual features on deliberately.
+amber_enabled: true
