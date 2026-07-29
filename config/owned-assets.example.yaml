@@ -32,6 +32,9 @@ devices:
   - id: "ha:light.living_room"
     label: "living room lights"
     kind: "homeassistant"
+  - id: "ha:camera.front_porch"          # AMBER: viewing needs camera_mic on + confirmation
+    label: "front porch cam"
+    kind: "camera"
 
 # Hosts you can control over SSH. `host` must resolve into a network CIDR above.
 hosts:
@@ -51,13 +54,18 @@ rfid:
     label: "my-apartment-fob"
 
 # Radio. RX is unrestricted (listening to your own spectrum is legal everywhere).
-# TX bands are the ONLY frequencies the system will ever key up on, and they must
-# also be permitted by the jurisdiction profile. Values below are US Part 15 ISM.
+# TX bands are the ONLY frequencies the system will ever key up on, and every TX
+# also requires jurisdiction.rf.tx_allowed = true (which ships FALSE — TX is off by
+# default). When a transmit carries a power_dbm param, the gate enforces it against
+# max_erp_dbm here. NOTE: in the US 902-928 MHz and 2.4 GHz are broad Part 15.247
+# bands, but 433.92 MHz is restricted (Part 15.231/15.240 — periodic, low field
+# strength), so the 433 entry is conservative and should stay disabled unless you
+# have confirmed a lawful use.
 rf:
   rx_unrestricted: true
   tx_bands:
-    - { center_hz: 433920000, bandwidth_hz: 250000, max_erp_dbm: 10, note: "433 MHz ISM (Part 15)" }
-    - { center_hz: 915000000, bandwidth_hz: 500000, max_erp_dbm: 30, note: "915 MHz ISM (Part 15)" }
+    - { center_hz: 915000000, bandwidth_hz: 500000, max_erp_dbm: 30, note: "902-928 MHz ISM (Part 15.247)" }
+    - { center_hz: 433920000, bandwidth_hz: 250000, max_erp_dbm: 10, note: "433.92 MHz — RESTRICTED (Part 15.231/15.240), verify before use" }
 
 # Financial / cloud accounts read through an official aggregation API with YOUR
 # OWN credentials. `id` is what the finance panel references; secrets live in

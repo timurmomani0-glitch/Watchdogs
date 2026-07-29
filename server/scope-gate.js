@@ -117,8 +117,14 @@ export function authorize(cmd, config) {
           const half = (b.bandwidth_hz || 0) / 2;
           return t.value >= b.center_hz - half && t.value <= b.center_hz + half;
         });
-        return band ? allow(true)
-          : deny(`${t.value} Hz outside every permitted TX band in the registry`);
+        if (!band) return deny(`${t.value} Hz outside every permitted TX band in the registry`);
+        // Enforce the declared power against the band's ERP cap. Final ERP still
+        // depends on the radio's gain setting; this gates the requested power.
+        const req = cmd.params?.power_dbm;
+        if (req != null && req > band.max_erp_dbm) {
+          return deny(`requested ${req} dBm exceeds band cap ${band.max_erp_dbm} dBm`);
+        }
+        return allow(true);
       }
       return deny(`unsupported sdr verb ${cmd.verb}`);
     }

@@ -33,7 +33,7 @@ code and cannot be enabled. See [`DELIVERABLE.md` §2](DELIVERABLE.md).
 
 ```bash
 npm install
-npm run check      # 18-assertion proof: gate ALLOWS in-scope, DENIES out-of-scope; audit chain verifies
+npm run check      # 26-check proof: in-scope ALLOW, conservative AMBER-off DENY, out-of-scope DENY, ERP cap, audit chain
 npm start          # http://localhost:7050  → the ctOS dashboard on mock data
 ```
 
@@ -52,8 +52,9 @@ is the whole thesis, running.
 1. `cp config/owned-assets.example.yaml config/owned-assets.yaml` and list **only** assets you own:
    your LAN CIDR, your device MACs / Home Assistant entity IDs, your RFID UIDs, your permitted TX
    bands, your account IDs. This file is gitignored — your asset list never leaves the box.
-2. `cp config/jurisdiction.example.yaml config/jurisdiction.yaml` — pre-filled for **US/FCC**. Verify
-   against current law before flipping any AMBER feature on.
+2. `cp config/jurisdiction.example.yaml config/jurisdiction.yaml` — pre-filled for **US/FCC** and
+   **RX-only by default** (RF transmit, RFID/NFC emulation, and camera/mic all ship **off**). Turn a
+   capability on deliberately, only after verifying it against current law for your state.
 3. Set `INTEGRATION_MODE=live` and the relevant env (`HA_URL`/`HA_TOKEN`, `PLAID_*`, `FLIPPER_PORT`,
    `AUDIT_KEY`). Each adapter's real transport is documented at its swap point in
    `server/adapters/*.js`.
