@@ -1,0 +1,22 @@
+name: ci
+
+# Gates every push on the scope-gate proof: the enforced legal boundary must
+# ALLOW in-scope targets and DENY everything else, and the audit chain must
+# verify. If server/selftest.js fails, the build fails.
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  scope-gate-proof:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - name: Prove the scope gate (18 assertions) + audit chain
+        run: npm run check
