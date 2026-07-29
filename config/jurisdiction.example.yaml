@@ -1,0 +1,52 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# JURISDICTION PROFILE  —  toggles AMBER (jurisdiction-dependent) capabilities.
+#
+# AMBER features stay OFF unless this file explicitly permits them AND the target
+# is in the owned-asset registry. This profile is pre-filled for: UNITED STATES.
+# Copy to  config/jurisdiction.yaml  (gitignored) and verify against current law.
+#
+# CONSERVATIVE-BY-DEFAULT POSTURE: out of the box this profile is RX-only — no RF
+# transmit, no RFID/NFC emulation, no camera/mic. Receiving spectrum and reading a
+# card you physically hold still work (both legal and benign). Turn a sensitive
+# capability ON only after you have verified it against current law for your state.
+# ─────────────────────────────────────────────────────────────────────────────
+
+country: "US"
+regulator: "FCC"
+
+# Software-defined radio.
+# RX (receiving/decoding your own signals) is always allowed and stays on.
+# TX is OFF by default. When enabled, TX is limited to the bands in the registry
+# (rf.tx_bands) at/below their max_erp_dbm. RTL-SDR is RX-ONLY hardware regardless
+# of this flag; TX only becomes possible with a HackRF-class radio.
+rf:
+  rx_allowed: true
+  tx_allowed: false                # OFF by default — flip on deliberately, per band
+  # US Part 15 nuance: 902-928 MHz and 2.4 GHz are broad Part 15.247 bands, but
+  # 433.92 MHz is usable only under the far more restrictive Part 15.231/15.240
+  # (periodic, low field-strength) — NOT a free-run ISM band. Treat 433 as limited.
+  tx_reference: "47 CFR Part 15 — 15.247 (902-928 MHz, 2.4 GHz); 15.231/15.240 (433 MHz, restricted)"
+
+# RFID / NFC emulation. OFF by default. When enabled, US law permits emulating
+# cards you OWN only, and the registry (rfid[]) is what enforces "yours". Reading
+# a card you physically hold is not gated by this flag (needed to discover a UID
+# before you register it).
+rfid_emulation_allowed: false
+
+# Camera / microphone. OFF by default. Any lens or mic that could capture a person
+# who has not consented is additionally gated behind an explicit per-action confirm.
+camera_mic:
+  recording_allowed: false
+  consent_rule: "US: one-party consent federally; some states (CA, FL, IL, PA,
+    WA, MD, MA, MT, NH, CT, DE, OR) require all-party consent for audio.
+    Confirm your state before enabling audio capture."
+  require_confirmation: true       # UI forces a confirm step for camera/mic view
+
+# Drones. Not wired to the rig by default; reference only.
+drone:
+  framework: "FAA — recreational (49 USC 44809) or Part 107 for commercial"
+  require_registration_over_g: 250
+
+# Master AMBER switch. If false, ALL jurisdiction-dependent features are disabled
+# regardless of the toggles above. Flip individual features on deliberately.
+amber_enabled: true

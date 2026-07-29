@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ctOS · personal</title>
+  <link rel="stylesheet" href="ctos.css" />
+</head>
+<body>
+  <div class="scanlines" aria-hidden="true"></div>
+
+  <header class="hud">
+    <div class="brand">
+      <span class="glyph">▚</span>
+      <span class="title" data-text="ctOS">ctOS</span>
+      <span class="sub">personal · command your own domain</span>
+    </div>
+    <div class="sysline" id="sysline">booting…</div>
+  </header>
+
+  <div id="demoBanner" class="demo-banner" hidden>
+    DEMO MODE · example registry loaded · all data is synthetic. Copy
+    <code>config/owned-assets.example.yaml → config/owned-assets.yaml</code> and set
+    <code>INTEGRATION_MODE=live</code> to wire real owned assets.
+  </div>
+
+  <main class="grid">
+    <section class="panel" id="panel-map">
+      <h2>◇ Network Map <span class="tag">owned CIDR</span></h2>
+      <canvas id="map" width="600" height="340"></canvas>
+    </section>
+
+    <section class="panel" id="panel-grid">
+      <h2>▣ Device Grid</h2>
+      <div id="devices" class="devices"></div>
+    </section>
+
+    <section class="panel" id="panel-profiler">
+      <h2>◈ Profiler <span class="tag">own-asset</span></h2>
+      <div id="profiler" class="profiler muted">select a node…</div>
+    </section>
+
+    <section class="panel" id="panel-control">
+      <h2>⚙ Control Panel</h2>
+      <div id="scenes" class="scenes"></div>
+      <div id="controls" class="controls"></div>
+    </section>
+
+    <section class="panel" id="panel-wf">
+      <h2>≋ Spectrum Waterfall <span class="tag amber">RX-only</span></h2>
+      <canvas id="waterfall" width="600" height="200"></canvas>
+      <div class="wf-axis"><span>433.80</span><span>433.92 MHz</span><span>434.04</span></div>
+    </section>
+
+    <section class="panel" id="panel-finance">
+      <h2>$ Finance / Notifications <span class="tag">own accounts</span></h2>
+      <div id="finance" class="finance"></div>
+      <div id="notes" class="notes"></div>
+    </section>
+
+    <section class="panel" id="panel-feed">
+      <h2>⌁ Live Feed</h2>
+      <div id="feed" class="feed"></div>
+    </section>
+
+    <section class="panel" id="panel-gate">
+      <h2>⛨ Scope Gate <span class="tag green">enforced</span></h2>
+      <p class="muted small">Issue a command. Out-of-scope targets are denied and logged — no override.</p>
+      <div class="gate-try">
+        <button data-cmd='{"verb":"scan","class":"network","target":"192.168.1.0/24"}'>scan owned LAN</button>
+        <button data-cmd='{"verb":"control","class":"homeassistant","target":"ha:switch.office_lamp","params":{"action":"toggle"}}'>toggle owned lamp</button>
+        <button data-cmd='{"verb":"transmit","class":"sdr","target":"rf:433920000"}'>TX in-band (AMBER)</button>
+        <button class="danger" data-cmd='{"verb":"scan","class":"network","target":"10.0.0.0/24"}'>scan neighbour ✗</button>
+        <button class="danger" data-cmd='{"verb":"emulate","class":"flipper","target":"nfc:DEADBEEF"}'>emulate stranger card ✗</button>
+      </div>
+      <div id="gateOut" class="gate-out"></div>
+    </section>
+
+    <section class="panel" id="panel-audit">
+      <h2>▤ Audit Log <span class="tag" id="chainTag">chain</span></h2>
+      <div id="audit" class="audit"></div>
+    </section>
+  </main>
+
+  <script src="ctos.js"></script>
+</body>
+</html>

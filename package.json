@@ -1,0 +1,20 @@
+{
+  "name": "ctos-personal",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Watch Dogs 2 ctOS-style command dashboard for your OWN devices, network, radio, and accounts. Legal scope is enforced in code, not documented as a warning.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "check": "node server/selftest.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "js-yaml": "^4.1.0",
+    "ws": "^8.18.0"
+  }
+}
