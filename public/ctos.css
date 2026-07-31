@@ -297,3 +297,48 @@ body::after {
   -webkit-mask-image: linear-gradient(to top, #000 0%, transparent 92%);
           mask-image: linear-gradient(to top, #000 0%, transparent 92%);
 }
+
+/* ── Watch / telemetry / history panels ─────────────────────────────────── */
+#panel-watch { grid-column: span 2; }
+#panel-tele  { grid-column: span 1; }
+#panel-hist  { grid-column: span 1; }
+@media (max-width: 1100px) { #panel-watch, #panel-tele, #panel-hist { grid-column: span 2; } }
+@media (max-width: 640px)  { #panel-watch, #panel-tele, #panel-hist { grid-column: 1 !important; } }
+
+.watchbar { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+.watch-out { font-size: 11px; max-height: 150px; overflow: auto; }
+.watch-out .line { padding: 3px 0; border-bottom: 1px dashed var(--line); }
+
+.tele .row { display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  padding: 3px 0; border-bottom: 1px dashed var(--line); }
+.tele .k { color: var(--muted); }
+.tele .v { color: var(--grey-b); text-align: right; }
+.bar { display: inline-block; width: 66px; height: 6px; background: #1b2024;
+  border: 1px solid var(--line); vertical-align: middle; margin: 0 4px; }
+.bar i { display: block; height: 100%; background: var(--grey-b); }
+
+.presence { margin-bottom: 8px; }
+.pres { font-size: 13px; letter-spacing: 0.08em; }
+.pres.on  { color: var(--white); }
+.pres.off { color: var(--muted); }
+.hist { font-size: 11px; max-height: 170px; overflow: auto; }
+.hist .a { padding: 3px 0; border-bottom: 1px dashed var(--line);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hist .t { color: var(--dim); margin-right: 8px; }
+
+/* ── Motion: the HUD must be usable, not seizure-inducing ────────────────── */
+/* Glitch/CRT motion only runs when FX is explicitly enabled (⚡ FX button). */
+body.no-fx .crt { animation: none; }
+body.no-fx .noise { animation: none; opacity: 0.035; }
+body.no-fx .title::before,
+body.no-fx .title::after { animation: none; opacity: 0; }
+body.no-fx .skull { animation: none; }
+body.no-fx .tear { display: none; }
+body.no-fx.glitching .grid { animation: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .crt, .noise, .skull, .title::before, .title::after,
+  .boot-emblem, .bl2, .bl3 { animation: none !important; }
+  .tear { display: none !important; }
+  .grid { animation: none !important; }
+}

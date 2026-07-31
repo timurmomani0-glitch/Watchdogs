@@ -8,4 +8,6 @@ config/owned-assets.yaml
 config/jurisdiction.yaml
 config/audit.key
 data/audit.log
+data/devices.json
+data/events.jsonl
 data/*.local.*
