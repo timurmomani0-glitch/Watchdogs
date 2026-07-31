@@ -62,6 +62,34 @@ for you — see [`windows/README.md`](windows/README.md). Terminal HUD details:
 
 ## Going live (Stage A → B)
 
+**One command — no hardware needed:**
+
+```bash
+npm run setup      # detects your networks, confirms ownership, writes the registry
+```
+
+Then start it against your real LAN:
+
+```bash
+INTEGRATION_MODE=live npm start                    # macOS / Linux
+$env:INTEGRATION_MODE="live"; npm start            # Windows PowerShell
+```
+
+The Device Grid and Network Map now show your real devices (via `arp -a` on Windows, `arp-scan`
+elsewhere). Everything outside your registered CIDR stays denied and logged.
+
+Check what's in scope at any time:
+
+```bash
+npm run scope      # what YOUR registry allows/denies right now
+npm run check      # gate-logic proof against fixed fixtures (always 26/26)
+```
+
+> `setup` never assumes ownership — adding a network requires typing `I OWN THIS`, and it warns on
+> ranges that are typically shared infrastructure (carrier NAT, oversized campus/hotel subnets).
+
+### Manual alternative
+
 1. `cp config/owned-assets.example.yaml config/owned-assets.yaml` and list **only** assets you own:
    your LAN CIDR, your device MACs / Home Assistant entity IDs, your RFID UIDs, your permitted TX
    bands, your account IDs. This file is gitignored — your asset list never leaves the box.
