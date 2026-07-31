@@ -44,7 +44,11 @@ expect('TX denied (tx_allowed=false)', { verb: 'transmit', class: 'sdr', target:
 expect('emulate denied (emulation off)', { verb: 'emulate', class: 'flipper', target: 'nfc:04A1B2C3' }, false);
 expect('camera denied (recording off)', { verb: 'view', class: 'camera', target: 'ha:camera.front_porch', params: { confirmed: true } }, false);
 
+expect('wake owned device (WoL)', { verb: 'control', class: 'wol', target: 'mac:aa:bb:cc:dd:ee:01' }, true);
+
 console.log('── out-of-scope (must all DENY) ────────────────────────────');
+expect('wake UNOWNED device (WoL)', { verb: 'control', class: 'wol', target: 'mac:de:ad:be:ef:00:01' }, false);
+expect('wol with non-mac target', { verb: 'control', class: 'wol', target: '192.168.1.10' }, false);
 expect('scan neighbour CIDR', { verb: 'scan', class: 'network', target: '10.0.0.0/24' }, false);
 expect('scan public host', { verb: 'scan', class: 'network', target: '8.8.8.8' }, false);
 expect('control unlisted host', { verb: 'control', class: 'host', target: '192.168.1.99' }, false);

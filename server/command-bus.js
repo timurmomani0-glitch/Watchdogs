@@ -17,6 +17,7 @@ import * as ha from './adapters/homeassistant.js';
 import * as sdr from './adapters/sdr.js';
 import * as flipper from './adapters/flipper.js';
 import * as finance from './adapters/finance.js';
+import { wake } from './wol.js';
 
 export async function dispatch(cmd, config, actor = 'operator') {
   const verdict = authorize(cmd, config);
@@ -63,6 +64,8 @@ async function execute(cmd, config) {
       return cmd.verb === 'emulate'
         ? flipper.emulate(cmd.target.split(':')[1])
         : flipper.read(cmd.params?.kind || 'nfc');
+    case 'wol':
+      return wake(cmd.target.replace(/^mac:/, ''));
     case 'camera':
       return { view: 'stream-authorized', target: cmd.target, note: 'consent-confirmed' };
     case 'finance':

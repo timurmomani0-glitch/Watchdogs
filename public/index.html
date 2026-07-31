@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ctOS · personal</title>
   <link rel="stylesheet" href="ctos.css" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#060809" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
 </head>
 <body>
   <div class="scanlines" aria-hidden="true"></div>
@@ -179,6 +184,26 @@
         <button class="danger" data-cmd='{"verb":"emulate","class":"flipper","target":"nfc:DEADBEEF"}'>emulate stranger card ✗</button>
       </div>
       <div id="gateOut" class="gate-out"></div>
+    </section>
+
+    <section class="panel" id="panel-watch">
+      <h2>⛨ Watch <span class="tag green">defensive</span><span class="tag" id="watchTag">idle</span></h2>
+      <div class="watchbar">
+        <button id="sweepNow">⟳ sweep now</button>
+        <span class="muted small" id="watchMeta"></span>
+      </div>
+      <div id="watchOut" class="watch-out"></div>
+    </section>
+
+    <section class="panel" id="panel-tele">
+      <h2>▮ This Machine <span class="tag">live</span></h2>
+      <div id="tele" class="tele muted">reading…</div>
+    </section>
+
+    <section class="panel" id="panel-hist">
+      <h2>◷ History <span class="tag" id="histTag"></span></h2>
+      <div id="presence" class="presence"></div>
+      <div id="hist" class="hist"></div>
     </section>
 
     <section class="panel" id="panel-audit">

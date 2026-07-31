@@ -13,6 +13,11 @@ import * as ha from './adapters/homeassistant.js';
 import * as sdr from './adapters/sdr.js';
 import * as finance from './adapters/finance.js';
 import * as hosts from './adapters/hosts.js';
+import * as telemetry from './adapters/telemetry.js';
+import * as store from './store.js';
+import * as watch from './watch.js';
+import { vendorOf } from './oui.js';
+import { configured as notifyConfigured, providers as notifyProviders } from './notify.js';
 
 const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
 const config = loadConfig();
@@ -43,7 +48,8 @@ app.get('/api/system', (req, res) => {
 
 app.get('/api/devices', async (req, res) => {
   const cidr = config.registry.networks?.[0]?.cidr;
-  res.json({ hosts: await network.discover(cidr), ha: ha.snapshot(config.registry.devices) });
+  const found = (await network.discover(cidr)).map((h) => ({ ...h, vendor: h.vendor || vendorOf(h.mac) || h.vendor }));
+  res.json({ hosts: found, ha: ha.snapshot(config.registry.devices) });
 });
 
 app.get('/api/profile/:ip', (req, res) => {
@@ -61,8 +67,25 @@ app.get('/api/capabilities', (req, res) => {
   res.json(capabilityLegend());
 });
 
+// ── defensive ctOS / history / presence / telemetry ────────────────────────
+app.get('/api/telemetry', async (req, res) => res.json(await telemetry.snapshot()));
+app.get('/api/history', (req, res) => res.json({
+  stats: store.stats(), devices: store.list(), events: store.recentEvents(60),
+}));
+app.get('/api/presence', (req, res) => res.json(watch.presence(config)));
+app.get('/api/watch', (req, res) => res.json({
+  ...watch.status(), notify: { configured: notifyConfigured(), providers: notifyProviders() },
+}));
+app.post('/api/watch/sweep', async (req, res) => res.json(await watch.sweep(config, broadcast)));
+app.post('/api/history/purge', (req, res) => res.json(store.purge()));
+
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server, path: '/ws' });
+
+function broadcast(msg) {
+  const raw = JSON.stringify(msg);
+  for (const ws of wss.clients) if (ws.readyState === ws.OPEN) ws.send(raw);
+}
 
 wss.on('connection', (ws) => {
   ws.send(JSON.stringify({ stream: 'hello', payload: { ts: new Date().toISOString(), demo: config.demo } }));
@@ -98,6 +121,14 @@ function capabilityLegend() {
     amber: ['sdr.transmit (US Part 15 bands only)', 'flipper.emulate (own cards only)',
       'camera.view (consent-confirmed)'],
   };
+}
+
+// Defensive watcher: only meaningful once a real network is registered.
+if (!config.demo) {
+  const w = watch.start(config, broadcast);
+  console.log(`watch: intrusion detection every ${(w?.intervalMs || 0) / 1000}s on ${config.registry.networks?.[0]?.cidr}`);
+} else {
+  store.load();
 }
 
 server.listen(PORT, () => {

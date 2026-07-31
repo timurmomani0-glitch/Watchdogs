@@ -50,6 +50,7 @@ export function parseTarget(target) {
   if (target.startsWith('nfc:') || target.startsWith('rfid:'))
     return { kind: 'card', value: target.split(':')[1]?.toUpperCase() };
   if (target.startsWith('acct:')) return { kind: 'account', value: target };
+  if (target.startsWith('mac:')) return { kind: 'mac', value: target.slice(4).toLowerCase() };
   if (target.includes('/')) return { kind: 'network', value: target };
   if (ipToInt(target) !== null) return { kind: 'host', value: target };
   return { kind: 'unknown', value: target };
@@ -82,6 +83,16 @@ export function authorize(cmd, config) {
         return ok ? allow() : deny(`host ${t.value} is outside every owned CIDR`);
       }
       return deny(`network class requires a CIDR or IP target, got ${t.kind}`);
+    }
+
+    case 'wol': {
+      // Wake-on-LAN sends a magic packet to a MAC address. Only devices you have
+      // explicitly registered may be woken — a MAC not in devices[] is denied.
+      if (t.kind !== 'mac') return deny(`wol requires a mac:<addr> target, got ${t.kind}`);
+      const owned = (registry.devices || []).some(
+        (d) => String(d.id).toLowerCase() === t.value
+      );
+      return owned ? allow() : deny(`${t.value} not in owned devices registry`);
     }
 
     case 'host': {

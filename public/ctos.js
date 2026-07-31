@@ -11,6 +11,7 @@ function connect() {
     if (stream === 'waterfall') pushWaterfall(payload);
     else if (stream === 'feed') pushFeed(payload);
     else if (stream === 'result') showResult(payload);
+    else if (stream === 'alert') pushAlert(payload);
   };
   ws.onclose = () => setTimeout(connect, 1500);
 }
@@ -180,6 +181,85 @@ function pushWaterfall(p) {
   for (let i = 0; i < p.bins; i++) { ctx.fillStyle = powerColor(p.row[i]); ctx.fillRect(i * cw, 0, cw + 1, 1); }
 }
 
+// ── Watch / telemetry / history / presence ──────────────────────────────────
+async function loadWatch() {
+  const w = await (await fetch('/api/watch')).json();
+  const tag = $('#watchTag');
+  if (tag) {
+    tag.textContent = w.ran ? `${w.unregistered} unregistered` : 'idle';
+    tag.className = 'tag ' + (w.unregistered > 0 ? '' : 'green');
+    if (w.unregistered > 0) tag.style.color = 'var(--skull-red)', tag.style.borderColor = 'var(--skull-red)';
+  }
+  const meta = $('#watchMeta');
+  if (meta) meta.textContent = w.ran
+    ? `${w.cidr} · ${w.seen} seen · every ${(w.intervalMs / 1000) | 0}s` +
+      (w.notify?.configured ? ` · push:${w.notify.providers.join('+')}` : ' · push:off')
+    : 'register your network (npm run setup) to enable';
+}
+
+async function loadHistory() {
+  const h = await (await fetch('/api/history')).json();
+  const t = $('#histTag');
+  if (t) t.textContent = `${h.stats.online}/${h.stats.total} online · ${h.stats.retentionDays}d`;
+  const box = $('#hist');
+  if (box) {
+    box.innerHTML = h.events.slice(0, 14).map((e) => {
+      const cls = e.kind === 'device.unregistered' ? 'deny' : e.kind === 'device.leave' ? 'muted' : 'ok';
+      const label = { 'device.join': 'JOIN', 'device.leave': 'LEFT', 'device.return': 'BACK',
+                      'device.unregistered': 'UNKNOWN' }[e.kind] || e.kind;
+      return `<div class="a"><span class="t">${(e.ts || '').slice(11, 19)}</span>` +
+             `<span class="${cls}">${label}</span> ${e.ip || ''} ${e.vendor ? '· ' + e.vendor : ''}</div>`;
+    }).join('') || '<span class="muted">no device events yet</span>';
+  }
+  const p = await (await fetch('/api/presence')).json();
+  const pb = $('#presence');
+  if (pb) pb.innerHTML = p.totalRegistered
+    ? `<div class="pres ${p.home ? 'on' : 'off'}">${p.home ? '◉ HOME' : '○ AWAY'}` +
+      `<span class="muted small"> · ${p.onlineCount}/${p.totalRegistered} of your devices online</span></div>`
+    : '<span class="muted small">register device MACs to enable presence</span>';
+}
+
+async function loadTelemetry() {
+  const t = await (await fetch('/api/telemetry')).json();
+  const box = $('#tele'); if (!box) return;
+  box.classList.remove('muted');
+  const bar = (pct) => `<span class="bar"><i style="width:${Math.max(2, Math.min(100, pct))}%"></i></span>`;
+  const rows = [
+    ['host', t.host], ['os', t.platform],
+    ['cpu', `${t.cpu.pct}% ${bar(t.cpu.pct)} <span class="muted">${t.cpu.cores} cores</span>`],
+    ['mem', `${t.mem.usedPct}% ${bar(t.mem.usedPct)} <span class="muted">${t.mem.totalGb} GB</span>`],
+  ];
+  if (t.disk) rows.push(['disk', `${t.disk.usedPct}% ${bar(t.disk.usedPct)} <span class="muted">${t.disk.freeGb} GB free</span>`]);
+  rows.push(['uptime', `${t.uptimeHours} h`]);
+  rows.push(['wan', t.wan.up ? `<span class="ok">up</span> ${t.wan.ms} ms <span class="muted">${t.wan.host}</span>`
+                             : `<span class="deny">down</span> <span class="muted">${t.wan.host}</span>`]);
+  box.innerHTML = rows.map(([k, v]) => `<div class="row"><span class="k">${k}</span><span class="v">${v}</span></div>`).join('');
+}
+
+$('#sweepNow')?.addEventListener('click', async () => {
+  const out = $('#watchOut');
+  if (out) out.innerHTML = '<span class="muted">sweeping…</span>';
+  const r = await (await fetch('/api/watch/sweep', { method: 'POST' })).json();
+  if (out) out.innerHTML = r.ran
+    ? `<div class="line"><span class="ok">SWEEP</span> ${r.seen} device(s) · ` +
+      `<span class="${r.unregistered ? 'deny' : 'ok'}">${r.unregistered} unregistered</span></div>`
+    : `<div class="line muted">${r.reason || 'not available'}</div>`;
+  loadWatch(); loadHistory(); loadDevices();
+});
+
+// live alerts from the watcher
+function pushAlert(a) {
+  const out = $('#watchOut'); if (!out) return;
+  const cls = a.kind === 'unregistered' ? 'deny' : a.kind === 'leave' ? 'muted' : 'ok';
+  const label = { unregistered: 'UNREGISTERED', join: 'JOINED', leave: 'LEFT' }[a.kind] || a.kind;
+  const el2 = el('div', 'line', `<span class="${cls}">${label}</span> ${a.ip || ''} ${C_mac(a.mac)} ${a.vendor ? '· ' + a.vendor : ''}`);
+  out.prepend(el2);
+  while (out.children.length > 10) out.lastChild.remove();
+  if (a.kind === 'unregistered') { fireTear(); noiseBurst(0.2, 0.05, 520); }
+  loadHistory();
+}
+const C_mac = (m) => m ? `<span class="muted">${m}</span>` : '';
+
 // ── HUD clock (desktop-shell feel) ───────────────────────────────────────────
 function tickClock() {
   const c = $('#clock');
@@ -257,5 +337,13 @@ runBoot();
 // ── Boot ─────────────────────────────────────────────────────────────────────
 connect();
 loadSystem(); loadDevices(); loadFinance(); loadAudit();
+loadWatch(); loadHistory(); loadTelemetry();
+setInterval(loadTelemetry, 5000);
+setInterval(() => { loadWatch(); loadHistory(); }, 20000);
+
+// PWA — installable on your phone
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
 requestAnimationFrame(stepMap);
 setInterval(loadFinance, 15000);
