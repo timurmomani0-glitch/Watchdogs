@@ -55,6 +55,26 @@ export function addEvent(ev) {
   return row;
 }
 
+// Aging out is a PROMISE, not a display filter. Dropping expired rows from the
+// in-memory array only cleans up what the API returns — the JSONL on disk kept
+// every MAC ever seen, forever. Retention has to be applied to the file too,
+// or "sightings age out" is false the moment anyone opens data/events.jsonl.
+function pruneEventsFile(cutoff) {
+  try {
+    if (!fs.existsSync(EVENTS)) return 0;
+    const rows = fs.readFileSync(EVENTS, 'utf8').split('\n').filter(Boolean);
+    const kept = rows.filter((l) => {
+      try { return new Date(JSON.parse(l).ts).getTime() >= cutoff; } catch { return false; }
+    });
+    if (kept.length === rows.length) return 0;
+    // Rewrite via a temp file so a crash mid-write cannot truncate the history.
+    const tmp = EVENTS + '.tmp';
+    fs.writeFileSync(tmp, kept.length ? kept.join('\n') + '\n' : '');
+    fs.renameSync(tmp, EVENTS);
+    return rows.length - kept.length;
+  } catch { return 0; }
+}
+
 function prune() {
   const cutoff = Date.now() - RETENTION_DAYS * 864e5;
   let dropped = 0;
@@ -63,6 +83,7 @@ function prune() {
   }
   events = events.filter((e) => new Date(e.ts).getTime() >= cutoff);
   if (dropped) saveDevices();
+  pruneEventsFile(cutoff);
   return dropped;
 }
 

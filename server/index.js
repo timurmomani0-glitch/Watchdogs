@@ -58,7 +58,9 @@ app.get('/api/system', (req, res) => {
 app.get('/api/devices', async (req, res) => {
   const cidr = config.registry.networks?.[0]?.cidr;
   const found = (await network.discover(cidr)).map((h) => ({ ...h, vendor: h.vendor || vendorOf(h.mac) || h.vendor }));
-  res.json({ hosts: found, ha: ha.snapshot(config.registry.devices) });
+  // scan carries WHY the list is empty — a quiet LAN and a broken scanner look
+  // identical otherwise, and so does "you are not on your registered network".
+  res.json({ hosts: found, scan: network.status(), cidr: cidr || null, ha: ha.snapshot(config.registry.devices) });
 });
 
 app.get('/api/profile/:ip', async (req, res) => {

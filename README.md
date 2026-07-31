@@ -33,7 +33,7 @@ code and cannot be enabled. See [`DELIVERABLE.md` §2](DELIVERABLE.md).
 
 ```bash
 npm install
-npm run check      # 40-check proof: in-scope ALLOW, AMBER-off DENY, out-of-scope DENY, ERP cap, results confinement, audit chain
+npm run check      # 57-check proof: in-scope ALLOW, AMBER-off DENY, out-of-scope DENY, ERP cap, results confinement, sweep range, audit chain
 npm start          # http://localhost:7050  → the ctOS dashboard on mock data
 ```
 
@@ -78,14 +78,26 @@ $env:INTEGRATION_MODE="live"; npm start            # Windows PowerShell
 The Device Grid and Network Map now show your real devices (via a ping sweep + `arp -a` on Windows,
 `arp-scan` elsewhere). Results are filtered to the CIDR you authorized, so a scan of your LAN can
 never hand back a host from a phone hotspot, a VPN or a second NIC. Everything outside your
-registered CIDR stays denied and logged, and if the scanner is missing the grid stays empty rather
-than showing invented devices.
+registered CIDR stays denied and logged, and if the scanner is missing the grid says so rather than
+showing invented devices — or an empty network that isn't empty.
+
+Two refusals are worth knowing about, because both look like "it stopped working":
+
+- **No network registered → nothing is scanned.** A missing or malformed CIDR matches *nothing*,
+  not everything. The state where you own nothing is the state where the gate denies everything, so
+  the adapter must not be the one component that opens up. Register a network with `npm run setup`.
+- **Not on your registered network → no sweep at all.** Take the laptop to a café and ctOS will
+  refuse to probe, rather than ARP-sweeping a stranger's LAN and quietly discarding the results.
+  Filtering output cannot un-send a packet, so the sweep itself is what has to be refused.
+
+Both show up in the Device Grid as `SCAN UNAVAILABLE` with the reason, and on `/api/devices` as
+`scan: { ok: false, reason }`.
 
 Check what's in scope at any time:
 
 ```bash
 npm run scope      # what YOUR registry allows/denies right now
-npm run check      # gate-logic proof against fixed fixtures (always 40/40)
+npm run check      # gate-logic proof against fixed fixtures (always 57/57)
 ```
 
 > `setup` never assumes ownership — adding a network requires typing `I OWN THIS`, and it warns on

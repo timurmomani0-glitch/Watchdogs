@@ -9,6 +9,7 @@
 //      mock hosts, which would poison the sighting store and fire intrusion
 //      alerts for devices that do not exist.
 import { execFile } from 'node:child_process';
+import os from 'node:os';
 
 const MODE = process.env.INTEGRATION_MODE || 'mock';
 
@@ -75,25 +76,72 @@ export function parseWindowsArp(stdout) {
 // could return hosts from an unrelated network (a phone hotspot, a VPN, a
 // second NIC) that you never registered. Authorizing a target is meaningless if
 // the results can come from somewhere else.
+//
+// Everything here fails CLOSED. A missing, empty or malformed CIDR matches
+// NOTHING rather than everything — the state where the operator has registered
+// no network is exactly the state where the scope gate denies every command,
+// so it must not be the state where the adapter hands back the whole LAN.
 function ipToInt(ip) {
-  const p = ip.split('.');
+  const p = String(ip).split('.');
   if (p.length !== 4) return null;
   let n = 0;
   for (const o of p) {
+    // No leading zeros: "010" is 8 to a C resolver and 10 to Number(), and a
+    // scope filter that disagrees with the OS about which host an address means
+    // is a hole. Reject the ambiguity outright.
+    if (!/^(0|[1-9]\d{0,2})$/.test(o)) return null;
     const v = Number(o);
-    if (!Number.isInteger(v) || v < 0 || v > 255) return null;
+    if (v > 255) return null;
     n = (n << 8) + v;
   }
   return n >>> 0;
 }
-export function inCidr(ip, cidr) {
-  if (!cidr) return true;
-  const [net, bitsRaw] = String(cidr).split('/');
+
+// Parse a CIDR into {base, bits, mask, first, last} — or null if it is not a
+// well-formed range. `base` is masked to the true network address, so a
+// registry entry written as the operator's own address ("192.168.1.5/24",
+// which is how ipconfig and `ip -o -4 addr` print it) does not shift the range
+// off the end of the subnet.
+export function parseCidr(cidr) {
+  if (!cidr) return null;
+  const parts = String(cidr).split('/');
+  if (parts.length !== 2) return null;
+  const [net, bitsRaw] = parts;
+  if (!/^\d{1,2}$/.test(bitsRaw)) return null;   // rejects "", "1e1", "-1", "033"
   const bits = Number(bitsRaw);
-  const a = ipToInt(ip), b = ipToInt(net);
-  if (a === null || b === null || !Number.isInteger(bits)) return false;
+  if (bits > 32) return null;                     // rejects /33 (the shift wraps to /1)
+  const addr = ipToInt(net);
+  if (addr === null) return null;
   const mask = bits === 0 ? 0 : (~0 << (32 - bits)) >>> 0;
-  return ((a & mask) >>> 0) === ((b & mask) >>> 0);
+  const base = (addr & mask) >>> 0;
+  return { base, bits, mask, first: base, last: (base | (~mask >>> 0)) >>> 0 };
+}
+
+export function inCidr(ip, cidr) {
+  const r = parseCidr(cidr);
+  if (!r) return false;                           // fail closed
+  const a = ipToInt(ip);
+  if (a === null) return false;
+  return ((a & r.mask) >>> 0) === r.base;
+}
+
+// Is this machine actually ON the network it is about to scan?
+//
+// Without this check a laptop registered to 192.168.1.0/24 that wakes up on
+// café Wi-Fi still runs a discovery sweep — and on Linux `arp-scan --localnet`
+// would enumerate the café's hosts. The result filter then drops every one of
+// them, so the operator sees an empty grid and never learns their machine
+// spent the afternoon ARP-scanning a network they do not own. Filtering the
+// output cannot un-send the packets; the sweep itself has to be refused.
+export function localAddressIn(cidr) {
+  const ifaces = os.networkInterfaces();
+  for (const [name, addrs] of Object.entries(ifaces || {})) {
+    for (const a of addrs || []) {
+      const fam = a.family === 'IPv4' || a.family === 4;
+      if (fam && !a.internal && inCidr(a.address, cidr)) return { iface: name, address: a.address };
+    }
+  }
+  return null;
 }
 
 // Active sweep: `arp -a` only reports hosts Windows has recently talked to, so a
@@ -102,20 +150,25 @@ export function inCidr(ip, cidr) {
 // keeps it from spawning hundreds of processes.
 function primeArpCache(cidr, budgetMs = 9000) {
   return new Promise((resolve) => {
-    const [net, bitsRaw] = String(cidr || '').split('/');
-    const bits = Number(bitsRaw);
-    if (!net || !Number.isInteger(bits) || bits < 22) {
-      if (net) console.warn(`network: ${cidr} is too large to sweep — falling back to the passive ARP cache.`);
+    const r = parseCidr(cidr);
+    if (!r) return resolve();
+    if (r.bits < 22) {
+      console.warn(`network: ${cidr} is too large to sweep — falling back to the passive ARP cache.`);
       return resolve();
     }
-    const base = ipToInt(net);
-    if (base === null) return resolve();
-    const usable = 2 ** (32 - bits) - 2;
+    // Every target is derived from the MASKED base and clamped to `last`, so a
+    // sweep can never walk past the end of the authorized range into a
+    // neighbouring subnet.
+    const usable = Math.max(0, r.last - r.first - 1);
     const count = Math.min(254, usable);
     // No silent truncation: say so when the sweep does not cover the whole range.
     if (count < usable) console.warn(`network: sweeping the first ${count} of ${usable} addresses in ${cidr}.`);
     const targets = [];
-    for (let i = 1; i <= count; i++) targets.push(intToIp(base + i));
+    for (let i = 1; i <= count; i++) {
+      const n = (r.base + i) >>> 0;
+      if (n >= r.last) break;                       // never touch or pass the broadcast address
+      targets.push(intToIp(n));
+    }
 
     const win = process.platform === 'win32';
     let idx = 0, active = 0, done = false;
@@ -138,41 +191,80 @@ function primeArpCache(cidr, budgetMs = 9000) {
     next();
   });
 }
-function intToIp(n) {
+export function intToIp(n) {
   return [(n >>> 24) & 255, (n >>> 16) & 255, (n >>> 8) & 255, n & 255].join('.');
 }
 
-let warnedScanner = false;
+// Last discovery outcome, so callers can tell "the LAN is quiet" apart from
+// "the scanner is broken". An empty array meant both before, which made a
+// failed sweep look like every device leaving at once.
+let lastStatus = { ok: true, reason: null, at: null };
+export function status() { return { ...lastStatus, mode: MODE }; }
+
+function fail(reason, { quiet = false } = {}) {
+  const changed = lastStatus.ok || lastStatus.reason !== reason;
+  lastStatus = { ok: false, reason, at: new Date().toISOString() };
+  // Warn on every transition into a new failure, not once per process — a
+  // permanent latch hides a scanner that breaks hours into a run.
+  if (changed && !quiet) console.error(`network: ${reason}`);
+  return [];
+}
+
+// Short cache so the Device Grid and a profiler card opened right after it
+// share one sweep instead of each spawning their own 254-address ping run.
+let cache = { cidr: null, at: 0, hosts: [] };
+const CACHE_MS = Number(process.env.CTOS_DISCOVER_CACHE_MS || 5000);
 
 async function liveDiscover(cidr) {
+  const r = parseCidr(cidr);
+  if (!r) return fail(`no valid owned network to scan (got ${JSON.stringify(cidr)}) — run: npm run setup`);
+
+  // Refuse to sweep a network this machine is not attached to. See the note
+  // above localAddressIn(): filtering results cannot un-send probe packets.
+  const local = localAddressIn(cidr);
+  if (!local) {
+    return fail(`this machine has no address in ${cidr} — not scanning. ` +
+      'Connect to your registered network, or register the one you are on.');
+  }
+
+  const now = Date.now();
+  if (cache.cidr === cidr && now - cache.at < CACHE_MS) return cache.hosts;
+
   const win = process.platform === 'win32';
   // Windows has no active scanner built in — prime the cache ourselves first.
   if (win) await primeArpCache(cidr);
   return new Promise((resolve) => {
     const cmd = win ? 'arp' : 'arp-scan';
-    const args = win ? ['-a'] : ['--localnet', '--quiet'];
+    // Linux: scan the AUTHORIZED range explicitly. `--localnet` derives its
+    // target from the interface, which is a different thing entirely the
+    // moment those two disagree.
+    const args = win ? ['-a'] : ['--interface', local.iface, '--quiet', '--ignoredups', cidr];
     execFile(cmd, args, { timeout: 15000, windowsHide: true }, (err, stdout) => {
       if (err) {
         // Fail loud, never fabricate. Returning mock hosts here would put nine
         // invented MACs into the sighting store and fire "unregistered device"
         // alerts for devices that do not exist.
-        if (!warnedScanner) {
-          warnedScanner = true;
-          console.error(`network: live discovery failed (${cmd}: ${err.message.trim()}) — returning no hosts.` +
-            (win ? '' : ' Install arp-scan, or run with INTEGRATION_MODE=mock for the demo.'));
-        }
-        return resolve([]);
+        return resolve(fail(`live discovery failed (${cmd}: ${err.message.trim()}) — returning no hosts.` +
+          (win ? '' : ' Install arp-scan, or run with INTEGRATION_MODE=mock for the demo.')));
       }
       // Confine to the authorized CIDR — see the note above ipToInt().
       const hosts = (win ? parseWindowsArp(stdout) : parseArpScan(stdout))
         .filter((h) => inCidr(h.ip, cidr));
+      lastStatus = { ok: true, reason: null, at: new Date().toISOString() };
+      cache = { cidr, at: Date.now(), hosts };
       resolve(hosts);
     });
   });
 }
 
 export function discover(cidr) {
-  return MODE === 'live' ? liveDiscover(cidr) : Promise.resolve(mockDiscover(cidr));
+  if (MODE !== 'live') {
+    lastStatus = { ok: true, reason: null, at: new Date().toISOString() };
+    // Mock hosts are generated inside the requested range, but filter anyway so
+    // the demo cannot demonstrate behaviour the live path would refuse.
+    return Promise.resolve(mockDiscover(cidr).filter((h) => inCidr(h.ip, cidr)));
+  }
+  return liveDiscover(cidr);
 }
 
 // Profiler card for a single device (own metadata only — no third-party PII).
@@ -180,6 +272,16 @@ export function discover(cidr) {
 // card for a host that isn't there, and never for an address outside the
 // authorized CIDR.
 export async function profile(ip, cidr) {
+  // Out of scope is checked FIRST, before mode, so the demo can never show a
+  // card for an address the live path would refuse.
+  if (!inCidr(ip, cidr)) {
+    return {
+      ip, online: false, tags: ['out-of-scope'],
+      notes: parseCidr(cidr)
+        ? `${ip} is outside the authorized range ${cidr}.`
+        : `No owned network is registered, so ${ip} is not in scope. Run: npm run setup`,
+    };
+  }
   if (MODE !== 'live') {
     const host = mockDiscover(cidr).find((h) => h.ip === ip) || mockDiscover(cidr)[0];
     return {
@@ -190,11 +292,12 @@ export async function profile(ip, cidr) {
       notes: 'Owned asset. Data synthesized in mock mode.',
     };
   }
-  if (!inCidr(ip, cidr)) {
-    return { ip, online: false, notes: `${ip} is outside the authorized range ${cidr}.`, tags: ['out-of-scope'] };
-  }
   const host = (await liveDiscover(cidr)).find((h) => h.ip === ip);
-  if (!host) return { ip, online: false, notes: 'Not seen in the last scan of your network.', tags: ['offline'] };
+  if (!host) {
+    return lastStatus.ok
+      ? { ip, online: false, notes: 'Not seen in the last scan of your network.', tags: ['offline'] }
+      : { ip, online: false, notes: `Scan unavailable: ${lastStatus.reason}`, tags: ['scan-failed'] };
+  }
   return {
     ...host,
     tags: [host.kind, host.vendor, 'online'].filter(Boolean),

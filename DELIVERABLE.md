@@ -87,7 +87,7 @@ Every GREEN/AMBER row routes the same way: `command-bus.js` → `authorize(cmd, 
 
 - **All GREEN/AMBER rows already have a home:** `network`/`host` → `adapters/network.js`,`hosts.js` (Network Map, Device Grid, Profiler); `homeassistant` → `adapters/homeassistant.js` (Control Panel, Notifications); `sdr` → `adapters/sdr.js` (Spectrum Waterfall); `flipper` → `adapters/flipper.js`; `camera` → Live Feed; `finance` → `adapters/finance.js` (Finance panel).
 - **Every AMBER condition is enforced in code, not prose:** `AMBER_CLASSES = new Set(['sdr','flipper','camera'])` in `scope-gate.js` requires the jurisdiction profile to permit the class (plus the global `amber_enabled` kill-switch); SDR gates RX on `jurisdiction.rf.rx_allowed` and blocks `transmit` outside `registry.rf.tx_bands`; flipper `emulate` requires the UID in `registry.rfid[]`; camera requires `params.confirmed` when `require_confirmation` is set.
-- **Every RED mechanic is denied by default** and logged to the hash-chained audit — the closest legal cousin is the only thing that ships. `npm run check` proves the gate allows in-scope and denies out-of-scope targets across its 40 checks — in-scope ALLOW, conservative AMBER-off DENY, out-of-scope DENY, deliberately-enabled AMBER ALLOW/DENY (including the ERP power cap), results confinement (scan output filtered to the authorized CIDR), and audit-chain verify — and exits non-zero on any failure.
+- **Every RED mechanic is denied by default** and logged to the hash-chained audit — the closest legal cousin is the only thing that ships. `npm run check` proves the gate allows in-scope and denies out-of-scope targets across its 57 checks — in-scope ALLOW, conservative AMBER-off DENY, out-of-scope DENY, deliberately-enabled AMBER ALLOW/DENY (including the ERP power cap), results confinement (scan output filtered to the authorized CIDR), and audit-chain verify — and exits non-zero on any failure.
 
 ---
 
@@ -363,7 +363,7 @@ The Pi 5 is the **brain**: always on, holding the server, scope gate, hash-chain
 This is the mechanism that makes the system **refuse out-of-scope action automatically.** It is fully
 implemented in [`server/scope-gate.js`](server/scope-gate.js), [`server/audit.js`](server/audit.js),
 and [`server/command-bus.js`](server/command-bus.js), and proven by
-[`server/selftest.js`](server/selftest.js) (`npm run check`, 40 checks).
+[`server/selftest.js`](server/selftest.js) (`npm run check`, 57 checks).
 
 ### 6.1 Owned-asset registry (single source of truth)
 
@@ -546,7 +546,7 @@ npm start            # serves http://localhost:7050  (INTEGRATION_MODE defaults 
 
 Browse to `http://<home-base-ip>:7050`. Every panel renders on synthetic data: Network Map (force-directed canvas), Device Grid, Profiler, Control Panel, Spectrum Waterfall, Finance/Notifications, Live Feed, Scope Gate demo, Audit Log.
 
-`npm run check` runs `server/selftest.js`: 28 scope-gate assertions (in-scope ALLOW, conservative AMBER-off DENY, out-of-scope DENY, and deliberately-enabled AMBER ALLOW/DENY including the ERP power cap), 11 results-confinement assertions (scan output filtered to the authorized CIDR, ARP junk dropped) plus one audit-chain verify — 40 checks, printed as `40 passed, 0 failed`, exit 0.
+`npm run check` runs `server/selftest.js`: 28 scope-gate assertions (in-scope ALLOW, conservative AMBER-off DENY, out-of-scope DENY, and deliberately-enabled AMBER ALLOW/DENY including the ERP power cap), 20 results-confinement assertions (a missing/malformed CIDR matches nothing, scan output filtered to the authorized CIDR, ARP junk dropped), 8 sweep-range assertions (probes stay inside the owned range; no sweep when this machine is not on that network) plus one audit-chain verify — 57 checks, printed as `57 passed, 0 failed`, exit 0.
 
 **Checkpoint:** `npm run check` prints all checks passing and the audit chain intact. The UI is live and animating on mock data. The Scope Gate panel's preset buttons fire an in-scope command (allowed) and an out-of-scope one (e.g. *scan neighbour ✗*, *emulate stranger card ✗* → DENIED + logged) with nothing owned yet — the gate authorizes against the committed example registry in demo mode.
 
@@ -885,7 +885,7 @@ Every axis below assumes an attacker whose goal is to make *your own build* do s
 | Integration | What breaks going live | Fix |
 |---|---|---|
 | **RTL-SDR won't claim the device** | The `dvb_usb_rtl28xxu` kernel driver grabs the dongle on plug-in; `rtl_tcp`/`rtl_power` then fail with "usb_claim_interface error -6". | Blacklist it: `/etc/modprobe.d/rtl-sdr.conf` → `blacklist dvb_usb_rtl28xxu`, then a udev rule granting the SDR group access to the USB device, `usermod -aG` the service user, reboot. Document this in the Stage B runbook — it is the #1 "my waterfall is dead" cause. |
-| **Silent mock fallback masks a dead radio/scan** | `network.js` line 43 falls back to `mockDiscover(cidr)` on any `arp-scan` error; `sdr.js` currently returns synthetic FFT rows even under `MODE=live` (the live branch is an empty placeholder that falls through to the generator). A permission error therefore renders as **plausible fake data** — the operator trusts a map of devices that don't exist. | In `live` mode, surface failures instead of swallowing them: return an explicit `{degraded:true, reason}` to the UI and paint the panel amber, rather than substituting mock data. Fake data must never be indistinguishable from real data. |
+| **Silent mock fallback masks a dead radio/scan** | ~~`network.js` falls back to `mockDiscover(cidr)` on any `arp-scan` error~~ — **fixed.** `liveDiscover()` now returns an empty list and records `{ok:false, reason}`, exposed on `/api/devices` as `scan` and rendered as `SCAN UNAVAILABLE · <reason>` instead of a blank grid; the watcher skips the sweep entirely rather than recording every device as having left. `sdr.js` still returns synthetic FFT rows under `MODE=live` (the live branch is an empty placeholder that falls through to the generator). | Remaining work is `sdr.js`: give it the same `{ok:false, reason}` treatment so a dead radio is never indistinguishable from a quiet band. Fake data must never be indistinguishable from real data. |
 | **arp-scan needs raw-socket privilege** | `network.js` (line 41 comment) notes `arp-scan` "requires CAP_NET_RAW or sudo." Run as an unprivileged service user, `arp-scan`/`nmap -sn` fail with a permission error — and, per the row above, the adapter then silently falls back to mock, so the map looks healthy while nothing was actually scanned. | Grant the capability, not root: `setcap cap_net_raw+ep $(command -v arp-scan)` (or run `nmap -sn <cidr>` with the same cap), and confirm the scan actually ran before trusting the map. Device/AP visibility comes **only** from arp-scan of the **owned** CIDR plus the router/HA integration for owned APs — there is deliberately **no** Wi-Fi monitor-mode / packet-capture path in the build, because monitor mode receives non-owned frames and no gate can scope it to "yours." Do not add one. |
 | **HA cloud vs local API** | Nabu Casa cloud, reverse proxies, and HA's deprecated legacy `api_password` auth are all dead ends. Long-lived tokens expire/revoke; the WS API needs the local URL. | Point `HA_URL` at the **local** `http://homeassistant.local:8123` (or LAN IP), use a Long-Lived Access Token in `HA_TOKEN`, prefer the WebSocket API for state stream + REST for service calls (the adapter already POSTs `/api/services/<domain>/<service>` with a Bearer token). Keep it on-LAN so the rig works when the internet is down. |
 | **Plaid/Teller rate limits + token refresh** | Sandbox works forever; **production** enforces item re-auth (banks force re-login ~90 days), webhook-driven refresh, and per-endpoint rate caps. Polling balances on a timer will 429 and then the token will silently go stale. | Cache balances, refresh on webhook not on a tight poll, implement the `ITEM_LOGIN_REQUIRED` re-auth flow, back off on 429. Treat Teller/Plaid **sandbox** creds as demo-only — production access requires an application and is gated. For Stage A, `provider: "self"` (already in the example registry as `acct:cloud-vps`) + read-only is the reliable path. |
@@ -947,7 +947,7 @@ That lands inside Tier 2. **HackRF (TX-capable, ~$150+) is Tier 3** — do not r
 
 | Horizon | Realistic outcome |
 |---|---|
-| **First weekend** | Clone repo, `npm install && npm start`, full ctOS UI live on **mock** data at `localhost:7050`. Fill in `owned-assets.yaml` and `jurisdiction.yaml`. Run `npm run check` and watch all **26** checks pass — in-scope ALLOW, conservative AMBER-off DENY, out-of-scope DENY, deliberately-enabled AMBER ALLOW/DENY, plus the audit-chain verify (the harness prints "26 passed"). Stand up the Pi as the brain, WireGuard/Tailscale to a phone browser as the thin client. Zero hardware integration — pure aesthetic/simulation Stage A, fully working. |
+| **First weekend** | Clone repo, `npm install && npm start`, full ctOS UI live on **mock** data at `localhost:7050`. Fill in `owned-assets.yaml` and `jurisdiction.yaml`. Run `npm run check` and watch all **57** checks pass — in-scope ALLOW, conservative AMBER-off DENY, out-of-scope DENY, deliberately-enabled AMBER ALLOW/DENY, plus the audit-chain verify (the harness prints "57 passed"). Stand up the Pi as the brain, WireGuard/Tailscale to a phone browser as the thin client. Zero hardware integration — pure aesthetic/simulation Stage A, fully working. |
 | **First month** | One integration per weekend, in ascending pain order: (1) **network** live (`arp-scan <cidr>` on the brain — after the `--localnet` fix and the `cap_net_raw` grant); (2) **HA** live via local token; (3) **RTL-SDR** RX (the udev/blacklist fight is the real time sink); (4) **Flipper** read-then-emulate of own cards; (5) **finance** on `provider:self` / sandbox. Do **not** expect production bank data or any TX in month one. |
 
 Effort reality: the code is done. The month is spent on **drivers, tokens, and udev rules**, not application logic. Budget the RTL-SDR blacklist/udev step and the HA token step as the two things most likely to eat an evening each.
@@ -966,7 +966,7 @@ Effort reality: the code is done. The month is spent on **drivers, tokens, and u
 | **Flipper firmware** | CLI command surface drifts across OFW/Unleashed/RogueMaster; `ttyACM` enumeration changes. | Pin firmware, version-check on connect, udev symlink via `FLIPPER_PORT`. **Cadence: only upgrade firmware deliberately, then re-test the adapter.** |
 | **Certs / tokens / keys** | HA long-lived token revocation, WireGuard key rotation, TLS certs, SSH key expiry. Silent expiry = silent dead panel. | Track expiry dates; rotate on a schedule; alert before expiry. **Cadence: WireGuard/SSH keys rotated ~annually; watch token validity.** |
 | **Node / deps** | `express`/`ws`/`js-yaml` security advisories. | `npm audit` and dependency review. **Cadence: quarterly**, or on advisory. |
-| **The gate + audit core** | Does **not** rot — pure logic, no external API. This is by design: the legal boundary has no upstream that can deprecate it. | Re-run `npm run check` (26 checks: 25 gate assertions + the audit-chain verify) after **any** change to adapters or config. It is the regression net; keep it green. |
+| **The gate + audit core** | Does **not** rot — pure logic, no external API. This is by design: the legal boundary has no upstream that can deprecate it. | Re-run `npm run check` (57 checks: gate assertions, results confinement, sweep range, + the audit-chain verify) after **any** change to adapters or config. It is the regression net; keep it green. |
 
 **Standing rule:** treat `npm run check` as the pre-flight for every maintenance touch. The self-test proving the gate ALLOWS in-scope and DENIES out-of-scope is the one thing that must never go red — if a dependency bump or refactor breaks it, stop and fix the gate before anything else ships.
 
@@ -1027,7 +1027,7 @@ Tier 2, "Both" form factor.
 ```bash
 git clone <this repo> ctos && cd ctos
 npm install
-npm run check          # 26 checks: gate allow/deny, conservative AMBER defaults, ERP cap, audit chain
+npm run check          # 57 checks: gate allow/deny, AMBER defaults, ERP cap, results confinement, sweep range, audit chain
 npm start              # → http://localhost:7050
 ```
 
