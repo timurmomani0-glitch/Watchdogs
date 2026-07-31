@@ -1,11 +1,13 @@
 // Proof harness for the scope gate. It must: ALLOW in-scope GREEN actions, keep
 // AMBER capabilities OFF under the conservative default profile, DENY every
 // out-of-scope target, ALLOW AMBER actions only when the jurisdiction profile is
-// deliberately enabled (and still deny out-of-scope / over-power ones), and the
-// audit chain must verify. Run with `npm run check`. Exits non-zero on any failure.
+// deliberately enabled (and still deny out-of-scope / over-power ones), confine
+// scan RESULTS to the authorized range, and the audit chain must verify.
+// Run with `npm run check`. Exits non-zero on any failure.
 import { authorize } from './scope-gate.js';
 import { loadConfig } from './config.js';
 import { record, verifyChain } from './audit.js';
+import { inCidr, parseWindowsArp, parseArpScan } from './adapters/network.js';
 
 // Always test against the committed example fixtures, so this proof stays
 // stable regardless of the operator's private registry (npm run setup).
@@ -66,6 +68,50 @@ expect('emulate owned card', { verb: 'emulate', class: 'flipper', target: 'nfc:0
 expect('camera view (owned + consent confirmed)', { verb: 'view', class: 'camera', target: 'ha:camera.front_porch', params: { confirmed: true } }, true, amberOn);
 expect('camera view (owned, NOT confirmed)', { verb: 'view', class: 'camera', target: 'ha:camera.front_porch' }, false, amberOn);
 expect('camera view (unowned camera)', { verb: 'view', class: 'camera', target: 'ha:camera.neighbour', params: { confirmed: true } }, false, amberOn);
+
+// Authorizing a target is meaningless if the RESULTS can come from somewhere
+// else. `arp -a` dumps the whole ARP cache across every interface, so a scan of
+// the owned LAN can otherwise hand back hosts from a phone hotspot, a VPN or a
+// second NIC. These checks prove the adapter confines what it returns.
+console.log('── results confinement (scan output must stay in range) ────');
+function check(name, got, want) {
+  const ok = got === want;
+  console.log(`${ok ? 'PASS' : 'FAIL'}  ${name.padEnd(48)} ${got}`);
+  ok ? pass++ : fail++;
+}
+check('in-range host kept', inCidr('192.168.1.10', '192.168.1.0/24'), true);
+check('hotspot gateway rejected', inCidr('172.20.10.1', '192.168.1.0/24'), false);
+check('neighbour /24 rejected', inCidr('192.168.2.10', '192.168.1.0/24'), false);
+check('public address rejected', inCidr('8.8.8.8', '192.168.1.0/24'), false);
+check('supernet contains subnet host', inCidr('192.168.1.200', '192.168.0.0/16'), true);
+check('/28 boundary respected', inCidr('192.168.1.20', '192.168.1.0/28'), false);
+check('malformed address rejected', inCidr('192.168.1.999', '192.168.1.0/24'), false);
+
+// A realistic Windows ARP cache: owned LAN + an iPhone hotspot on another NIC,
+// plus the multicast/broadcast junk Windows always keeps in the table.
+const winArp = [
+  'Interface: 192.168.1.5 --- 0xc',
+  '  Internet Address      Physical Address      Type',
+  '  192.168.1.1           aa-bb-cc-dd-ee-01     dynamic',
+  '  192.168.1.10          aa-bb-cc-dd-ee-02     dynamic',
+  '  192.168.1.255         ff-ff-ff-ff-ff-ff     static',
+  '  224.0.0.22            01-00-5e-00-00-16     static',
+  'Interface: 172.20.10.2 --- 0x7',
+  '  172.20.10.1           82-96-98-80-e3-64     dynamic',
+].join('\n');
+const winAll = parseWindowsArp(winArp);
+const winScoped = winAll.filter((h) => inCidr(h.ip, '192.168.1.0/24'));
+check('windows arp: junk entries dropped', winAll.length, 3);
+check('windows arp: confined to owned /24', winScoped.length, 2);
+check('windows arp: hotspot host gone', winScoped.some((h) => h.ip === '172.20.10.1'), false);
+
+const lnxArp = [
+  '192.168.1.1\taa:bb:cc:dd:ee:01\tUbiquiti Inc',
+  '192.168.1.10\taa:bb:cc:dd:ee:02\tRaspberry Pi Trading',
+  '10.8.0.1\taa:bb:cc:dd:ee:03\tWireGuard peer',
+].join('\n');
+check('arp-scan: confined to owned /24',
+  parseArpScan(lnxArp).filter((h) => inCidr(h.ip, '192.168.1.0/24')).length, 2);
 
 console.log('── audit chain ─────────────────────────────────────────────');
 record({ actor: 'selftest', verb: 'scan', class: 'network', target: '192.168.1.0/24', result: 'allow' });
