@@ -8,12 +8,27 @@
 </head>
 <body>
   <div class="scanlines" aria-hidden="true"></div>
+  <div class="noise" aria-hidden="true"></div>
 
   <header class="hud">
     <div class="brand">
-      <span class="glyph">▚</span>
-      <span class="title" data-text="ctOS">ctOS</span>
-      <span class="sub">personal · command your own domain</span>
+      <svg class="skull" viewBox="0 0 64 64" aria-hidden="true">
+        <path class="s-cranium" d="M32 5 C18 5 9 15 9 29 c0 8 4 13 8 17 v6 c0 2 2 4 4 4 h22 c2 0 4-2 4-4 v-6 c4-4 8-9 8-17 C55 15 46 5 32 5 z"/>
+        <polygon class="s-eye" points="17,24 27,22 27,31 19,33"/>
+        <polygon class="s-eye" points="47,24 37,22 37,31 45,33"/>
+        <polygon class="s-nose" points="32,33 28,41 36,41"/>
+        <g class="s-teeth">
+          <rect x="23" y="47" width="3" height="7"/>
+          <rect x="28" y="47" width="3" height="8"/>
+          <rect x="33" y="47" width="3" height="8"/>
+          <rect x="38" y="47" width="3" height="7"/>
+        </g>
+        <rect class="s-mark" x="9" y="19" width="11" height="2"/>
+      </svg>
+      <div class="brandtext">
+        <span class="title" data-text="DEDSEC">DEDSEC</span>
+        <span class="sub">ctOS // command your own domain</span>
+      </div>
     </div>
     <div class="hud-right">
       <div class="clock" id="clock">--:--:--</div>

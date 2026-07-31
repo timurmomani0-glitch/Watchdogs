@@ -8,12 +8,12 @@ sw = Window.GetWidth();
 sh = Window.GetHeight();
 
 // ── Wordmark ─────────────────────────────────────────────────────────────────
-logo.image  = Image.Text("ctOS", 0.0, 0.9, 1.0);
+logo.image  = Image.Text("DEDSEC", 0.122, 0.839, 0.812);
 logo.sprite = Sprite(logo.image);
 logo.sprite.SetX(sw / 2 - logo.image.GetWidth() / 2);
 logo.sprite.SetY(sh / 2 - logo.image.GetHeight() / 2 - 46);
 
-sub.image  = Image.Text("commanding your own domain", 0.36, 0.49, 0.52);
+sub.image  = Image.Text("ctOS // commanding your own domain", 1.0, 0.478, 0.102);
 sub.sprite = Sprite(sub.image);
 sub.sprite.SetX(sw / 2 - sub.image.GetWidth() / 2);
 sub.sprite.SetY(sh / 2 + 16);
@@ -30,7 +30,7 @@ fun draw_bar(fraction) {
         if (i < n) s = s + "#"; else s = s + ".";
         i++;
     }
-    img = Image.Text(s, 0.0, 0.9, 1.0);
+    img = Image.Text(s, 0.122, 0.839, 0.812);
     bar.sprite.SetImage(img);
     bar.sprite.SetX(sw / 2 - img.GetWidth() / 2);
 }
@@ -45,7 +45,7 @@ Plymouth.SetBootProgressFunction(progress_callback);
 msg.sprite = Sprite();
 msg.sprite.SetY(sh / 2 + 100);
 fun message_callback(text) {
-    img = Image.Text(text, 0.36, 0.49, 0.52);
+    img = Image.Text(text, 0.337, 0.431, 0.455);
     msg.sprite.SetImage(img);
     msg.sprite.SetX(sw / 2 - img.GetWidth() / 2);
 }

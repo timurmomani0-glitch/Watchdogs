@@ -5,11 +5,11 @@
 set $mod Mod4
 font pango:monospace 10
 
-# ctOS colors:            border   bg       text     indicator child_border
-client.focused          #00e5ff #050809 #cfeef2 #00e5ff  #00e5ff
-client.focused_inactive #0a8ea3 #050809 #5c7d84 #0a8ea3  #0a8ea3
-client.unfocused        #12333a #050809 #5c7d84 #12333a  #12333a
-client.urgent           #ff3b30 #050809 #cfeef2 #ff3b30  #ff3b30
+# DedSec colors:          border   bg       text     indicator child_border
+client.focused          #1fd6cf #05080b #e8f0f1 #ff7a1a  #1fd6cf
+client.focused_inactive #0e8f8c #05080b #566e74 #0e8f8c  #0e8f8c
+client.unfocused        #123038 #05080b #566e74 #123038  #123038
+client.urgent           #ff2f2f #05080b #e8f0f1 #ff2f2f  #ff2f2f
 
 gaps inner 6
 gaps outer 8

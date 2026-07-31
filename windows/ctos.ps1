@@ -10,12 +10,13 @@ Set-Location -LiteralPath $repo
 $script:VT = $false
 try { $script:VT = [bool]$Host.UI.SupportsVirtualTerminal } catch {}
 $e = [char]27
-function Cy($s) { if ($script:VT) { "$e[38;2;0;229;255m$s$e[0m" } else { $s } }
-function Dm($s) { if ($script:VT) { "$e[38;2;92;125;132m$s$e[0m" } else { $s } }
+function Cy($s) { if ($script:VT) { "$e[38;2;31;214;207m$s$e[0m" } else { $s } }
+function Og($s) { if ($script:VT) { "$e[38;2;255;122;26m$s$e[0m" } else { $s } }
+function Dm($s) { if ($script:VT) { "$e[38;2;86;110;116m$s$e[0m" } else { $s } }
 
-$Host.UI.RawUI.WindowTitle = 'ctOS'
+$Host.UI.RawUI.WindowTitle = 'DedSec ctOS'
 Write-Host ""
-Write-Host (Cy "  [ ctOS ] // personal  -  command your own domain")
+Write-Host ((Cy "  [ DEDSEC ]") + (Og " // ctOS  -  command your own domain"))
 Write-Host (Dm "  scope-gated | mock data | US/FCC")
 Write-Host ""
 

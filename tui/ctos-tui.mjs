@@ -15,10 +15,11 @@ const ONCE = process.argv.includes('--once');
 const E = '\x1b[';
 const fg = (r, g, b) => `${E}38;2;${r};${g};${b}m`;
 const RESET = `${E}0m`;
+// DedSec (Watch Dogs 1): cold teal primary + orange alert accent.
 const C = {
-  cyan: fg(0, 229, 255), dim: fg(10, 142, 163), amber: fg(255, 176, 32),
-  red: fg(255, 59, 48), green: fg(34, 255, 167), text: fg(207, 238, 242),
-  muted: fg(92, 125, 132), white: fg(234, 252, 255),
+  cyan: fg(31, 214, 207), dim: fg(14, 143, 140), amber: fg(255, 122, 26),
+  red: fg(255, 47, 47), green: fg(37, 211, 156), text: fg(188, 205, 209),
+  muted: fg(86, 110, 116), white: fg(232, 240, 241),
 };
 const at = (x, y) => `${E}${y + 1};${x + 1}H`;
 const strip = (s) => s.replace(/\x1b\[[0-9;]*m/g, '');
@@ -90,9 +91,10 @@ function panel(x, y, w, h, title) {
 function line(x, y, s, w) { write(x, y, padEnd(s, w)); }
 
 function powerColor(dbfs) {
+  // DedSec spectrum: dark → teal → orange peaks.
   const t = Math.max(0, Math.min(1, (dbfs + 110) / 100));
-  if (t < 0.5) { const k = t * 2; return fg(Math.round(4 - 4 * k), Math.round(8 + 221 * k), Math.round(10 + 245 * k)); }
-  const k = (t - 0.5) * 2; return fg(Math.round(234 * k), Math.round(229 + 23 * k), 255);
+  if (t < 0.5) { const k = t * 2; return fg(Math.round(5 + 26 * k), Math.round(8 + 206 * k), Math.round(11 + 196 * k)); }
+  const k = (t - 0.5) * 2; return fg(Math.round(31 + 224 * k), Math.round(214 - 92 * k), Math.round(207 - 181 * k));
 }
 
 function render() {
@@ -109,9 +111,9 @@ function render() {
   const clock = new Date().toLocaleTimeString([], { hour12: false });
   const right = `${clock}  ·  ${sys.demo ? 'DEMO' : 'LIVE'}  ·  ${jur.country || '--'}/${jur.regulator || '--'}  TX:${jur.rf_tx ? 'on' : 'off'} NFC:${jur.rfid_emulation ? 'on' : 'off'} AMBER:${jur.amber_enabled ? 'on' : 'off'}  [${S.status}]`;
   const rightStart = Math.max(0, cols - right.length - 1);
-  const brand = '▚ ctOS // personal · command your own domain';
+  const brand = 'DEDSEC // ctOS · command your own domain';
   const leftClipped = brand.slice(0, Math.max(6, rightStart - 2)); // never overlap the status
-  write(0, 0, C.cyan + '▚ ' + C.white + 'ctOS' + C.dim + leftClipped.slice(6) + RESET);
+  write(0, 0, C.white + 'DEDSEC' + C.amber + leftClipped.slice(6) + RESET);
   write(rightStart, 0, C.cyan + clock + C.muted + right.slice(clock.length) + RESET);
   write(0, 1, C.dim + '─'.repeat(cols) + RESET);
 

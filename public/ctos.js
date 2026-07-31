@@ -150,24 +150,25 @@ function stepMap() {
     n.x = Math.max(16, Math.min(w - 16, n.x)); n.y = Math.max(16, Math.min(h - 16, n.y));
   }
   ctx.clearRect(0, 0, w, h);
-  ctx.strokeStyle = '#0a8ea355'; ctx.lineWidth = 1;
+  ctx.strokeStyle = '#0e8f8c55'; ctx.lineWidth = 1;
   for (let i = 1; i < mapNodes.length; i++) {
     ctx.beginPath(); ctx.moveTo(router.x, router.y); ctx.lineTo(mapNodes[i].x, mapNodes[i].y); ctx.stroke();
   }
   mapNodes.forEach((n) => {
     ctx.beginPath(); ctx.arc(n.x, n.y, n.router ? 9 : 5, 0, Math.PI * 2);
-    ctx.fillStyle = n.router ? '#00e5ff' : n.online ? '#22ffa7' : '#ff3b30';
+    ctx.fillStyle = n.router ? '#1fd6cf' : n.online ? '#1fd6cf' : '#ff7a1a';
     ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 8; ctx.fill(); ctx.shadowBlur = 0;
-    ctx.fillStyle = '#5c7d84'; ctx.font = '9px monospace'; ctx.fillText(n.label, n.x + 8, n.y + 3);
+    ctx.fillStyle = '#566e74'; ctx.font = '9px monospace'; ctx.fillText(n.label, n.x + 8, n.y + 3);
   });
   requestAnimationFrame(stepMap);
 }
 
 // ── Spectrum Waterfall ───────────────────────────────────────────────────────
 function powerColor(dbfs) {
+  // DedSec spectrum: dark → teal → orange peaks (WD1 ctOS scan).
   const t = Math.max(0, Math.min(1, (dbfs + 110) / 100));
-  if (t < 0.5) { const k = t * 2; return `rgb(${4 + k * -4 | 0},${8 + k * 221 | 0},${10 + k * 245 | 0})`; }
-  const k = (t - 0.5) * 2; return `rgb(${0 + k * 234 | 0},${229 + k * 23 | 0},${255})`;
+  if (t < 0.5) { const k = t * 2; return `rgb(${5 + k * 26 | 0},${8 + k * 206 | 0},${11 + k * 196 | 0})`; }
+  const k = (t - 0.5) * 2; return `rgb(${31 + k * 224 | 0},${214 - k * 92 | 0},${207 - k * 181 | 0})`;
 }
 function pushWaterfall(p) {
   const cv = $('#waterfall'), ctx = cv.getContext('2d'), w = cv.width, h = cv.height;
