@@ -42,6 +42,15 @@ app.get('/api/system', (req, res) => {
       rfid_emulation: config.jurisdiction.rfid_emulation_allowed,
     },
     sources: config.sources,
+    // What the operator actually owns — the UI builds its probe buttons from
+    // this instead of hardcoding the example fixtures.
+    scope: {
+      cidr: config.registry.networks?.[0]?.cidr || null,
+      haDevice: (config.registry.devices || []).find((d) => d.kind === 'homeassistant') || null,
+      txBand: (config.registry.rf?.tx_bands || [])[0]?.center_hz || null,
+      rfid: (config.registry.rfid || [])[0]?.uid || null,
+      hosts: (config.registry.hosts || []).length,
+    },
     audit: verifyChain(),
   });
 });
