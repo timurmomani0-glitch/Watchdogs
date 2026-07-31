@@ -280,3 +280,20 @@ button.on { background: var(--grey-b); color: #06080a; border-color: var(--grey-
 .sk-drip  { fill: var(--skull-red); }
 .wm       { fill: url(#hatch); stroke: #05070a; stroke-width: 8; stroke-linejoin: round; }
 .wm-drip  { fill: url(#hatch); stroke: #05070a; stroke-width: 3; }
+
+/* ── DedSec watchers: the masked figure behind the interface ─────────────── */
+/* "you are being watched" — a low-opacity presence behind every panel. */
+body::before {
+  content: ""; position: fixed; inset: 0; z-index: -2; pointer-events: none;
+  background: url("dedsec-mask.png") center 18% / min(62vw, 900px) auto no-repeat;
+  opacity: 0.19; filter: grayscale(1) contrast(1.1);
+}
+/* the wide reaper watches from the bottom edge */
+body::after {
+  content: ""; position: fixed; left: 0; right: 0; bottom: 0; height: 46vh; z-index: -1;
+  pointer-events: none;
+  background: url("dedsec-reaper.png") center bottom / cover no-repeat;
+  opacity: 0.15;
+  -webkit-mask-image: linear-gradient(to top, #000 0%, transparent 92%);
+          mask-image: linear-gradient(to top, #000 0%, transparent 92%);
+}
