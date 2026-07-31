@@ -87,7 +87,7 @@ Every GREEN/AMBER row routes the same way: `command-bus.js` → `authorize(cmd, 
 
 - **All GREEN/AMBER rows already have a home:** `network`/`host` → `adapters/network.js`,`hosts.js` (Network Map, Device Grid, Profiler); `homeassistant` → `adapters/homeassistant.js` (Control Panel, Notifications); `sdr` → `adapters/sdr.js` (Spectrum Waterfall); `flipper` → `adapters/flipper.js`; `camera` → Live Feed; `finance` → `adapters/finance.js` (Finance panel).
 - **Every AMBER condition is enforced in code, not prose:** `AMBER_CLASSES = new Set(['sdr','flipper','camera'])` in `scope-gate.js` requires the jurisdiction profile to permit the class (plus the global `amber_enabled` kill-switch); SDR gates RX on `jurisdiction.rf.rx_allowed` and blocks `transmit` outside `registry.rf.tx_bands`; flipper `emulate` requires the UID in `registry.rfid[]`; camera requires `params.confirmed` when `require_confirmation` is set.
-- **Every RED mechanic is denied by default** and logged to the hash-chained audit — the closest legal cousin is the only thing that ships. `npm run check` proves the gate allows in-scope and denies out-of-scope targets across its 26 checks — in-scope ALLOW, conservative AMBER-off DENY, out-of-scope DENY, deliberately-enabled AMBER ALLOW/DENY (including the ERP power cap), and audit-chain verify — and exits non-zero on any failure.
+- **Every RED mechanic is denied by default** and logged to the hash-chained audit — the closest legal cousin is the only thing that ships. `npm run check` proves the gate allows in-scope and denies out-of-scope targets across its 40 checks — in-scope ALLOW, conservative AMBER-off DENY, out-of-scope DENY, deliberately-enabled AMBER ALLOW/DENY (including the ERP power cap), results confinement (scan output filtered to the authorized CIDR), and audit-chain verify — and exits non-zero on any failure.
 
 ---
 
@@ -363,7 +363,7 @@ The Pi 5 is the **brain**: always on, holding the server, scope gate, hash-chain
 This is the mechanism that makes the system **refuse out-of-scope action automatically.** It is fully
 implemented in [`server/scope-gate.js`](server/scope-gate.js), [`server/audit.js`](server/audit.js),
 and [`server/command-bus.js`](server/command-bus.js), and proven by
-[`server/selftest.js`](server/selftest.js) (`npm run check`, 26 checks).
+[`server/selftest.js`](server/selftest.js) (`npm run check`, 40 checks).
 
 ### 6.1 Owned-asset registry (single source of truth)
 
@@ -546,7 +546,7 @@ npm start            # serves http://localhost:7050  (INTEGRATION_MODE defaults 
 
 Browse to `http://<home-base-ip>:7050`. Every panel renders on synthetic data: Network Map (force-directed canvas), Device Grid, Profiler, Control Panel, Spectrum Waterfall, Finance/Notifications, Live Feed, Scope Gate demo, Audit Log.
 
-`npm run check` runs `server/selftest.js`: 25 scope-gate assertions (in-scope ALLOW, conservative AMBER-off DENY, out-of-scope DENY, and deliberately-enabled AMBER ALLOW/DENY including the ERP power cap) plus one audit-chain verify — 26 checks, printed as `26 passed, 0 failed`, exit 0.
+`npm run check` runs `server/selftest.js`: 28 scope-gate assertions (in-scope ALLOW, conservative AMBER-off DENY, out-of-scope DENY, and deliberately-enabled AMBER ALLOW/DENY including the ERP power cap), 11 results-confinement assertions (scan output filtered to the authorized CIDR, ARP junk dropped) plus one audit-chain verify — 40 checks, printed as `40 passed, 0 failed`, exit 0.
 
 **Checkpoint:** `npm run check` prints all checks passing and the audit chain intact. The UI is live and animating on mock data. The Scope Gate panel's preset buttons fire an in-scope command (allowed) and an out-of-scope one (e.g. *scan neighbour ✗*, *emulate stranger card ✗* → DENIED + logged) with nothing owned yet — the gate authorizes against the committed example registry in demo mode.
 
@@ -578,7 +578,7 @@ Restart: `npm start`.
 
 **Objective:** Replace the network adapter's mock with a real LAN sweep so the Grid and Map show hosts that are actually up. First real integration; scoped to CIDRs in your registry only.
 
-**Prerequisite:** M2. `server/adapters/network.js` already ships a working `liveDiscover(cidr)` that calls `arp-scan --localnet --quiet` (with a graceful fall-back to mock on error) — network is the one live transport that is fully implemented, no swap-point coding required.
+**Prerequisite:** M2. `server/adapters/network.js` already ships a working `liveDiscover(cidr)` that calls `arp-scan --localnet --quiet`, filters every result through `inCidr()` so output cannot escape the authorized range, and returns an empty list with a loud console warning if the scanner is missing — it never falls back to fabricated hosts in live mode — network is the one live transport that is fully implemented, no swap-point coding required.
 
 **Do it:**
 

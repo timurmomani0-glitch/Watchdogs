@@ -61,8 +61,8 @@ app.get('/api/devices', async (req, res) => {
   res.json({ hosts: found, ha: ha.snapshot(config.registry.devices) });
 });
 
-app.get('/api/profile/:ip', (req, res) => {
-  res.json(network.profile(req.params.ip, config.registry.networks?.[0]?.cidr));
+app.get('/api/profile/:ip', async (req, res) => {
+  res.json(await network.profile(req.params.ip, config.registry.networks?.[0]?.cidr));
 });
 
 app.get('/api/hosts', async (req, res) => res.json(await hosts.status(config.registry.hosts)));

@@ -51,7 +51,7 @@ async function execute(cmd, config) {
   switch (cmd.class) {
     case 'network':
       return cmd.verb === 'scan' ? { hosts: await network.discover(cmd.target) }
-        : network.profile(cmd.target, cidr);
+        : await network.profile(cmd.target, cidr);
     case 'host':
       return { note: 'host action authorized (adapter stubbed in mock mode)', target: cmd.target };
     case 'homeassistant':

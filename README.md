@@ -33,7 +33,7 @@ code and cannot be enabled. See [`DELIVERABLE.md` §2](DELIVERABLE.md).
 
 ```bash
 npm install
-npm run check      # 26-check proof: in-scope ALLOW, conservative AMBER-off DENY, out-of-scope DENY, ERP cap, audit chain
+npm run check      # 40-check proof: in-scope ALLOW, AMBER-off DENY, out-of-scope DENY, ERP cap, results confinement, audit chain
 npm start          # http://localhost:7050  → the ctOS dashboard on mock data
 ```
 
@@ -75,14 +75,17 @@ INTEGRATION_MODE=live npm start                    # macOS / Linux
 $env:INTEGRATION_MODE="live"; npm start            # Windows PowerShell
 ```
 
-The Device Grid and Network Map now show your real devices (via `arp -a` on Windows, `arp-scan`
-elsewhere). Everything outside your registered CIDR stays denied and logged.
+The Device Grid and Network Map now show your real devices (via a ping sweep + `arp -a` on Windows,
+`arp-scan` elsewhere). Results are filtered to the CIDR you authorized, so a scan of your LAN can
+never hand back a host from a phone hotspot, a VPN or a second NIC. Everything outside your
+registered CIDR stays denied and logged, and if the scanner is missing the grid stays empty rather
+than showing invented devices.
 
 Check what's in scope at any time:
 
 ```bash
 npm run scope      # what YOUR registry allows/denies right now
-npm run check      # gate-logic proof against fixed fixtures (always 26/26)
+npm run check      # gate-logic proof against fixed fixtures (always 40/40)
 ```
 
 > `setup` never assumes ownership — adding a network requires typing `I OWN THIS`, and it warns on
