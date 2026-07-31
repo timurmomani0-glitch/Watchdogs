@@ -11,4 +11,3 @@ MainScript=Main.qml
 ConfigFile=theme.conf
 TranslationsDirectory=
 Email=
-QtVersion=5

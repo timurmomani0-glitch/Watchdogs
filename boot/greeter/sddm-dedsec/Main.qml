@@ -27,7 +27,7 @@ Rectangle {
         width: 320
 
         Rectangle {
-            width: parent.width; height: 34; color: "#0b0e10cc"; border.color: "#2b2f31"; border.width: 1
+            width: parent.width; height: 34; color: "#cc0b0e10"; border.color: "#2b2f31"; border.width: 1
             TextInput {
                 id: username
                 anchors.fill: parent; anchors.leftMargin: 10; anchors.rightMargin: 10
@@ -45,7 +45,7 @@ Rectangle {
         }
 
         Rectangle {
-            width: parent.width; height: 34; color: "#0b0e10cc"; border.color: "#2b2f31"; border.width: 1
+            width: parent.width; height: 34; color: "#cc0b0e10"; border.color: "#2b2f31"; border.width: 1
             TextInput {
                 id: password
                 anchors.fill: parent; anchors.leftMargin: 10; anchors.rightMargin: 10
@@ -63,7 +63,7 @@ Rectangle {
         }
 
         Rectangle {
-            width: parent.width; height: 34; color: "#0b0e10cc"; border.color: "#6a7073"; border.width: 1
+            width: parent.width; height: 34; color: "#cc0b0e10"; border.color: "#6a7073"; border.width: 1
             Text { anchors.centerIn: parent; text: "▶ UNLOCK"; color: "#d7dbdc"; font.family: "monospace"; font.pixelSize: root.fs; font.bold: true }
             MouseArea { anchors.fill: parent; onClicked: sddm.login(username.text, password.text, sessionModel.lastIndex) }
         }
