@@ -9,18 +9,22 @@ import yaml from 'js-yaml';
 const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
 const CONFIG_DIR = path.join(__dirname, '..', 'config');
 
-function loadYaml(base) {
+function loadYaml(base, forceExample = false) {
   const real = path.join(CONFIG_DIR, `${base}.yaml`);
   const example = path.join(CONFIG_DIR, `${base}.example.yaml`);
-  const file = fs.existsSync(real) ? real : example;
+  const file = !forceExample && fs.existsSync(real) ? real : example;
   const usingExample = file === example;
   const data = yaml.load(fs.readFileSync(file, 'utf8'));
   return { data, usingExample, file };
 }
 
-export function loadConfig() {
-  const registry = loadYaml('owned-assets');
-  const jurisdiction = loadYaml('jurisdiction');
+// forceExample: always load the committed example configs, ignoring any private
+// registry. The self-test uses this so `npm run check` proves the GATE LOGIC
+// against fixed fixtures — otherwise it would start failing the moment a user
+// runs `npm run setup` and replaces the example network with their own.
+export function loadConfig({ forceExample = false } = {}) {
+  const registry = loadYaml('owned-assets', forceExample);
+  const jurisdiction = loadYaml('jurisdiction', forceExample);
   return {
     registry: registry.data,
     jurisdiction: jurisdiction.data,

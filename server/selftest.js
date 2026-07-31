@@ -7,7 +7,9 @@ import { authorize } from './scope-gate.js';
 import { loadConfig } from './config.js';
 import { record, verifyChain } from './audit.js';
 
-const config = loadConfig();
+// Always test against the committed example fixtures, so this proof stays
+// stable regardless of the operator's private registry (npm run setup).
+const config = loadConfig({ forceExample: true });
 // A copy of the profile with the AMBER capabilities deliberately switched on,
 // to prove the jurisdiction gate opens AND still constrains.
 const amberOn = {

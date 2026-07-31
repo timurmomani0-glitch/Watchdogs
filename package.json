@@ -11,7 +11,9 @@
     "start": "node server/index.js",
     "dev": "node --watch server/index.js",
     "tui": "node tui/ctos-tui.mjs",
-    "check": "node server/selftest.js"
+    "check": "node server/selftest.js",
+    "setup": "node scripts/setup.mjs",
+    "scope": "node scripts/scope.mjs"
   },
   "dependencies": {
     "express": "^4.19.2",
