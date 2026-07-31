@@ -1,0 +1,83 @@
+<!doctype html>
+<!-- Standalone DedSec art, rendered to background.png (1920x1080) for the GRUB
+     theme and the login greeter. Self-contained; no external assets. -->
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; height: 100%; background: #050608; overflow: hidden; }
+  .wrap { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+    font-family: ui-monospace, "JetBrains Mono", "Cascadia Mono", Menlo, monospace; }
+  .bg { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0.5; }
+  .dither { position: absolute; inset: 0; opacity: 0.12; mix-blend-mode: overlay;
+    background-image: radial-gradient(#fff 0.7px, transparent 0.9px); background-size: 3px 3px; }
+  .vig { position: absolute; inset: 0; background: radial-gradient(130% 130% at 50% 45%, transparent 55%, #000000aa 100%); }
+  .reaper { width: 300px; height: auto; position: relative; }
+  .r-robe, .r-hood, .w-drip { fill: url(#hatch); }
+  .r-hood { opacity: .97; } .r-cav { fill: #06080a; }
+  .rs-cranium { fill: #eef1f2; } .rs-eye, .rs-nose, .rs-teeth rect { fill: #06080a; }
+  .rs-drip { fill: #ff1a35; } .r-drip { fill: #9aa0a2; } .r-splat { fill: #5c6264; opacity: .7; }
+  .r-skull { filter: drop-shadow(0 0 10px #ff1a35) drop-shadow(1px 0 0 #ff0033); }
+  .word { width: 560px; height: auto; position: relative; transform: rotate(-2deg); margin-top: -6px; }
+  .ds-word text { font-family: ui-monospace, monospace; font-size: 66px; font-weight: 900; text-anchor: middle;
+    fill: url(#hatch); stroke: #06080a; stroke-width: 2.6; paint-order: stroke; }
+  .w-splat { fill: #c2c8ca; opacity: .85; }
+  .watched { position: relative; color: #d7dbdc; letter-spacing: 0.34em; font-size: 26px; margin-top: 6px; }
+  .sub { position: relative; color: #6a7073; letter-spacing: 0.12em; font-size: 17px; }
+</style>
+</head>
+<body>
+  <svg width="0" height="0"><defs>
+    <filter id="grit2" x="-45%" y="-45%" width="190%" height="190%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="3" seed="11" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="5.5"/>
+    </filter>
+    <filter id="rough" x="-25%" y="-45%" width="150%" height="190%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.55 0.85" numOctaves="3" seed="5" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="4"/>
+    </filter>
+    <pattern id="hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="5" height="5" fill="#9aa0a2"/><rect width="2.3" height="5" fill="#2b2f31"/>
+    </pattern>
+    <pattern id="skulltile" width="46" height="46" patternUnits="userSpaceOnUse">
+      <rect width="46" height="46" fill="#08090b"/>
+      <path transform="translate(9,8) scale(0.45)" fill="#1c2224" d="M32 4 C19 4 10 13 10 27 c0 8 3 13 7 17 l0 6 c0 2 2 4 4 4 l22 0 c2 0 4-2 4-4 l0-6 c4-4 7-9 7-17 C54 13 45 4 32 4 Z"/>
+      <g transform="translate(9,8) scale(0.45)" fill="#08090b"><circle cx="24" cy="26" r="5"/><circle cx="40" cy="26" r="5"/></g>
+    </pattern>
+  </defs></svg>
+
+  <svg class="bg" preserveAspectRatio="xMidYMid slice"><rect width="100%" height="100%" fill="url(#skulltile)"/></svg>
+  <div class="dither"></div>
+  <div class="vig"></div>
+
+  <div class="wrap">
+    <svg class="reaper" viewBox="0 0 180 196">
+      <g filter="url(#grit2)">
+        <path class="r-robe" d="M18 182 C18 132 42 106 66 101 C68 84 78 70 90 70 C102 70 112 84 114 101 C138 106 162 132 162 182 L154 172 L148 185 L140 170 L133 184 L125 169 L117 183 L109 170 L101 185 L92 171 L84 184 L76 170 L68 183 L60 170 L52 184 L44 171 L36 183 L28 170 Z"/>
+        <path class="r-hood" d="M90 12 C61 12 44 39 48 72 C50 91 62 106 80 110 L100 110 C118 106 130 91 132 72 C136 39 119 12 90 12 Z"/>
+        <path class="r-cav" d="M90 34 C68 34 57 55 60 77 C62 94 75 105 90 105 C105 105 118 94 120 77 C123 55 112 34 90 34 Z"/>
+        <g class="r-skull">
+          <path class="rs-cranium" d="M90 47 C77 47 68 57 68 70 c0 6 2 9 5 12 l0 5 c0 1 1 2 2 2 l30 0 c1 0 2-1 2-2 l0-5 c3-3 5-6 5-12 C112 57 103 47 90 47 Z"/>
+          <circle class="rs-eye" cx="80" cy="69" r="5.2"/><circle class="rs-eye" cx="100" cy="69" r="5.2"/>
+          <polygon class="rs-nose" points="90,71 85,80 95,80"/>
+          <g class="rs-teeth"><rect x="81" y="85" width="2.6" height="7"/><rect x="86.5" y="85" width="2.6" height="8"/><rect x="92" y="85" width="2.6" height="8"/><rect x="97" y="85" width="2.6" height="7"/></g>
+          <rect class="rs-drip" x="79" y="74" width="2" height="13"/><rect class="rs-drip" x="99.5" y="74" width="2" height="9"/>
+        </g>
+        <rect class="r-drip" x="60" y="182" width="2" height="9"/><rect class="r-drip" x="118" y="182" width="2" height="7"/><rect class="r-drip" x="90" y="185" width="2" height="9"/>
+        <circle class="r-splat" cx="30" cy="60" r="1.6"/><circle class="r-splat" cx="150" cy="70" r="1.4"/><circle class="r-splat" cx="24" cy="120" r="1.2"/><circle class="r-splat" cx="158" cy="128" r="1.6"/>
+      </g>
+    </svg>
+    <svg class="word" viewBox="0 0 400 118">
+      <g class="ds-word" filter="url(#rough)">
+        <text x="34" y="74" transform="rotate(-4 34 74)">D</text><text x="98" y="82" transform="rotate(3 98 82)">E</text>
+        <text x="156" y="68" transform="rotate(-2 156 68)">D</text><text x="218" y="80" transform="rotate(4 218 80)">S</text>
+        <text x="278" y="72" transform="rotate(-3 278 72)">E</text><text x="338" y="82" transform="rotate(2 338 82)">C</text>
+        <rect class="w-drip" x="62" y="74" width="3" height="24"/><rect class="w-drip" x="242" y="82" width="3" height="18"/><rect class="w-drip" x="304" y="74" width="3" height="14"/>
+        <circle class="w-splat" cx="18" cy="42" r="2.2"/><circle class="w-splat" cx="384" cy="54" r="2.6"/><circle class="w-splat" cx="204" cy="24" r="1.8"/>
+      </g>
+    </svg>
+    <div class="watched">YOU ARE BEING WATCHED</div>
+    <div class="sub">ctOS // — now watch your own.</div>
+  </div>
+</body>
+</html>

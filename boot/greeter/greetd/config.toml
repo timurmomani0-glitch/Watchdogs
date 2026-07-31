@@ -1,0 +1,18 @@
+# ctOS · DedSec greetd + tuigreet login (minimal / kiosk path — pairs with the
+# cage kiosk in rice/, or any WM). greetd and SDDM are mutually exclusive; use
+# this OR the SDDM theme, not both.
+#
+# Install:
+#   sudo cp config.toml /etc/greetd/config.toml     # edit --cmd first
+#   sudo systemctl enable greetd
+# Prereqs: greetd + tuigreet installed. tuigreet renders the DedSec greeting and
+# a greyscale theme (no image; that's the SDDM path).
+
+[terminal]
+vt = 1
+
+[default_session]
+# Replace the --cmd session with yours:
+#   Hyprland | sway | ~/.config/ctos/launch-ctos.sh (the cage ctOS kiosk) | startx
+command = "tuigreet --time --remember --asterisks --greeting 'WE ARE DEDSEC // you are being watched - now watch your own' --theme 'border=darkgray;text=white;prompt=gray;time=gray;greet=gray;action=darkgray;button=white;container=black;input=white' --cmd Hyprland"
+user = "greeter"

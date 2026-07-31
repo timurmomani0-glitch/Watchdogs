@@ -1,0 +1,54 @@
+# ctOS · DedSec GRUB2 theme. Greyscale surveillance, DedSec reaper background.
+# Install with ../install.sh (sets GRUB_THEME + gfxterm + regenerates grub.cfg).
+# Uses GRUB's default Unifont (always loaded) so no extra font setup is needed.
+
+title-text: ""
+desktop-image: "background.png"
+desktop-color: "#050608"
+message-color: "#9aa0a2"
+message-bg-color: "#050608"
+terminal-font: "Unifont Regular 16"
+
+# Boot menu — sits in the lower third so the reaper stays visible above it.
++ boot_menu {
+  left       = 32%
+  top        = 58%
+  width      = 36%
+  height     = 26%
+  item_font           = "Unifont Regular 16"
+  item_color          = "#9aa0a2"
+  selected_item_color = "#eef1f2"
+  item_height         = 28
+  item_spacing        = 6
+  icon_width          = 0
+  icon_height         = 0
+  item_icon_space     = 0
+  scrollbar           = false
+}
+
+# Tagline
++ label {
+  top   = 90%
+  left  = 0
+  width = 100%
+  align = "center"
+  color = "#6a7073"
+  font  = "Unifont Regular 16"
+  text  = "ctOS // command your own domain"
+}
+
+# Countdown / boot progress
++ progress_bar {
+  id           = "__timeout__"
+  left         = 32%
+  top          = 94%
+  width        = 36%
+  height       = 12
+  show_text    = true
+  font         = "Unifont Regular 16"
+  text_color   = "#9aa0a2"
+  fg_color     = "#d7dbdc"
+  bg_color     = "#14181a"
+  border_color = "#2b2f31"
+  text         = "@TIMEOUT_NOTIFICATION_SHORT@"
+}

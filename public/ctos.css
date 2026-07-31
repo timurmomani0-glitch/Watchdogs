@@ -78,7 +78,7 @@ body.glitching .grid { animation: gridtear 0.3s steps(3) 1; }
 .boot.out { animation: bootout 0.6s forwards; }
 @keyframes bootout { to { opacity: 0; visibility: hidden; filter: blur(3px); transform: scale(1.03); } }
 .boot-static {
-  position: absolute; inset: 0; opacity: 0.09; pointer-events: none;
+  position: absolute; inset: 0; opacity: 0.14; pointer-events: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   animation: noise 0.35s steps(2) infinite;
 }
@@ -109,31 +109,36 @@ body.glitching .grid { animation: gridtear 0.3s steps(3) 1; }
 }
 .boot-enter:hover { background: var(--grey); color: #04070a; }
 
-/* 1-bit halftone dither over the whole interface (same style as the boot) */
+/* 1-bit halftone dither over the whole interface (cranked) */
 .dither {
-  position: fixed; inset: 0; pointer-events: none; z-index: 46; opacity: 0.06;
-  background-image: radial-gradient(#ffffff 0.5px, transparent 0.7px);
-  background-size: 3px 3px;
+  position: fixed; inset: 0; pointer-events: none; z-index: 46; opacity: 0.11;
+  background-image: radial-gradient(#ffffff 0.7px, transparent 0.9px);
+  background-size: 3px 3px; mix-blend-mode: overlay;
 }
-/* faint engraving hatch on every panel */
-.panel { background-image: repeating-linear-gradient(45deg, #ffffff05 0 1px, transparent 1px 6px); }
+/* engraving hatch on every panel */
+.panel { background-image: repeating-linear-gradient(45deg, #ffffff09 0 1px, transparent 1px 5px); }
 
 /* boot: dithered field of skulls + hooded reaper + graffiti wordmark */
-.boot-bg { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0.5; }
+.boot-bg { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0.6; }
 .boot-inner { gap: 6px; }
-.boot-reaper { width: 190px; height: 204px; animation: reaperjit 5s infinite; }
+.boot-reaper { width: 208px; height: auto; animation: reaperjit 5s infinite; }
 @keyframes reaperjit { 0%, 92%, 100% { transform: translate(0, 0); } 93% { transform: translate(-2px, 1px); } 95% { transform: translate(2px, -1px); } 97% { transform: translate(-1px, 0); } }
 .r-robe, .r-hood { fill: url(#hatch); }
 .r-hood { opacity: 0.97; }
 .r-cav { fill: #06080a; }
 .rs-cranium { fill: #eef1f2; }
 .rs-eye, .rs-nose, .rs-teeth rect { fill: #06080a; }
-.r-skull { filter: drop-shadow(0 0 7px var(--skull-red)) drop-shadow(1px 0 0 var(--skull-red2)); }
-.boot-word { width: 350px; height: auto; transform: rotate(-2deg); }
-.ds-word {
-  font-family: var(--mono); font-size: 80px; font-weight: 900; letter-spacing: 4px;
-  text-anchor: middle; fill: url(#hatch); stroke: #06080a; stroke-width: 2; paint-order: stroke;
+.rs-drip { fill: var(--skull-red); }                 /* red drip — on the skull */
+.r-drip { fill: #9aa0a2; }
+.r-splat { fill: #5c6264; opacity: 0.7; }
+.r-skull { filter: drop-shadow(0 0 8px var(--skull-red)) drop-shadow(1px 0 0 var(--skull-red2)); }
+.boot-word { width: 360px; height: auto; transform: rotate(-2deg); }
+.ds-word text {
+  font-family: var(--mono); font-size: 66px; font-weight: 900;
+  text-anchor: middle; fill: url(#hatch); stroke: #06080a; stroke-width: 2.6; paint-order: stroke;
 }
+.w-drip { fill: url(#hatch); }
+.w-splat { fill: #c2c8ca; opacity: 0.85; }
 
 #hud-controls { position: fixed; bottom: 10px; right: 12px; z-index: 120; display: flex; gap: 6px; }
 #hud-controls button {
