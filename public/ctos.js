@@ -38,10 +38,43 @@ async function loadSystem() {
   $('#sysline').textContent =
     `owner ${s.owner}   ·   stage ${s.stage}\njur ${s.jurisdiction.country}/${s.jurisdiction.regulator}   TX:${s.jurisdiction.rf_tx ? 'on' : 'off'}  NFC-emu:${s.jurisdiction.rfid_emulation ? 'on' : 'off'}  AMBER:${s.jurisdiction.amber_enabled ? 'on' : 'off'}`;
   if (s.demo) $('#demoBanner').hidden = false;
+  buildGateButtons(s.scope || {});
   const tag = $('#chainTag');
   tag.textContent = s.audit.ok ? `chain ✓ ${s.audit.checked}` : `chain ✗ @${s.audit.brokenAt}`;
   tag.className = 'tag ' + (s.audit.ok ? 'green' : '');
   if (!s.audit.ok) tag.style.color = 'var(--red)';
+}
+
+// The Scope Gate probes must target YOUR registry, not the example fixtures —
+// otherwise going live turns "scan owned LAN" into a guaranteed denial.
+function buildGateButtons(scope) {
+  const box = document.querySelector('.gate-try');
+  if (!box) return;
+  const mk = (label, cmd, danger) => {
+    const b = el('button', danger ? 'danger' : null, label);
+    b.dataset.cmd = JSON.stringify(cmd);
+    return b;
+  };
+  box.innerHTML = '';
+
+  if (scope.cidr) box.appendChild(mk(`scan ${scope.cidr}`, { verb: 'scan', class: 'network', target: scope.cidr }));
+  if (scope.haDevice) {
+    box.appendChild(mk(`toggle ${scope.haDevice.label || scope.haDevice.id}`,
+      { verb: 'control', class: 'homeassistant', target: scope.haDevice.id, params: { action: 'toggle' } }));
+  }
+  if (scope.txBand) {
+    box.appendChild(mk(`TX ${(scope.txBand / 1e6).toFixed(2)} MHz (AMBER)`,
+      { verb: 'transmit', class: 'sdr', target: 'rf:' + scope.txBand }));
+  }
+  if (scope.rfid) {
+    box.appendChild(mk(`emulate own card (AMBER)`, { verb: 'emulate', class: 'flipper', target: 'nfc:' + scope.rfid }));
+  }
+  // Always-denied probes: proof the boundary holds.
+  box.appendChild(mk('scan 10.0.0.0/24 ✗', { verb: 'scan', class: 'network', target: '10.0.0.0/24' }, true));
+  box.appendChild(mk('emulate stranger card ✗', { verb: 'emulate', class: 'flipper', target: 'nfc:DEADBEEF' }, true));
+
+  const note = document.querySelector('#panel-gate .small');
+  if (note && !scope.cidr) note.textContent = 'No owned network registered — run: npm run setup';
 }
 
 // ── Device Grid + Network Map ────────────────────────────────────────────────
