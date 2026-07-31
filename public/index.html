@@ -7,7 +7,12 @@
   <link rel="stylesheet" href="ctos.css" />
   <link rel="manifest" href="manifest.webmanifest" />
   <meta name="theme-color" content="#060809" />
+  <!-- We are already a dark UI. Declaring it stops the browser (and re-theming
+       extensions like Dark Reader) from inverting our palette on top of us. -->
+  <meta name="color-scheme" content="dark" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
+  <link rel="icon" href="icon-192.png" type="image/png" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <link rel="apple-touch-icon" href="icon-192.png" />
 </head>

@@ -10,7 +10,7 @@
 // actively misleading, and the registry must always be read live.
 const CACHE = 'ctos-shell-v2';
 const SHELL = ['/', '/index.html', '/ctos.css', '/ctos.js',
-  '/dedsec-logo.png', '/dedsec-skull.png', '/manifest.webmanifest'];
+  '/dedsec-logo.png', '/dedsec-skull.png', '/icon-192.png', '/favicon.ico', '/manifest.webmanifest'];
 
 self.addEventListener('install', (e) => {
   // Prime the offline fallback, then take over immediately.

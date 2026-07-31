@@ -1,6 +1,7 @@
 /* ctOS · DedSec — greyscale surveillance interface. The ENTIRE UI is grey/black;
    neon red appears ONLY on the skull elements. Screen glitch stays monochrome. */
 :root {
+  color-scheme: dark;   /* native dark — stops extensions re-theming the HUD */
   --bg: #060809;
   --bg2: #0b0e10;
   --panel: rgba(12, 15, 17, 0.86);
