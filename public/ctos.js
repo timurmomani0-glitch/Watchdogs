@@ -114,6 +114,9 @@ function showResult(r) {
   const label = r.denied ? 'DENIED' : r.amber ? 'ALLOWED·AMBER' : 'ALLOWED';
   const line = el('div', 'line', `<span class="${cls}">${label}</span> ${r.reason || (r.data ? JSON.stringify(r.data).slice(0, 90) : 'ok')}`);
   const box = $('#gateOut'); box.prepend(line); while (box.children.length > 12) box.lastChild.remove();
+  if (r.denied) { noiseBurst(0.18, 0.05, 620); fireTear(); }
+  else if (r.amber) blip(420, 0.06);
+  else blip(760, 0.05);
   loadAudit();
 }
 document.addEventListener('click', (e) => {
@@ -150,25 +153,25 @@ function stepMap() {
     n.x = Math.max(16, Math.min(w - 16, n.x)); n.y = Math.max(16, Math.min(h - 16, n.y));
   }
   ctx.clearRect(0, 0, w, h);
-  ctx.strokeStyle = '#0e8f8c55'; ctx.lineWidth = 1;
+  ctx.strokeStyle = '#33393b66'; ctx.lineWidth = 1;
   for (let i = 1; i < mapNodes.length; i++) {
     ctx.beginPath(); ctx.moveTo(router.x, router.y); ctx.lineTo(mapNodes[i].x, mapNodes[i].y); ctx.stroke();
   }
   mapNodes.forEach((n) => {
     ctx.beginPath(); ctx.arc(n.x, n.y, n.router ? 9 : 5, 0, Math.PI * 2);
-    ctx.fillStyle = n.router ? '#1fd6cf' : n.online ? '#1fd6cf' : '#ff7a1a';
-    ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 8; ctx.fill(); ctx.shadowBlur = 0;
-    ctx.fillStyle = '#566e74'; ctx.font = '9px monospace'; ctx.fillText(n.label, n.x + 8, n.y + 3);
+    ctx.fillStyle = n.router ? '#eef1f2' : n.online ? '#aeb4b6' : '#4c5254';
+    ctx.shadowColor = '#ffffff40'; ctx.shadowBlur = n.online || n.router ? 7 : 0; ctx.fill(); ctx.shadowBlur = 0;
+    ctx.fillStyle = '#4c5254'; ctx.font = '9px monospace'; ctx.fillText(n.label, n.x + 8, n.y + 3);
   });
   requestAnimationFrame(stepMap);
 }
 
 // ── Spectrum Waterfall ───────────────────────────────────────────────────────
 function powerColor(dbfs) {
-  // DedSec spectrum: dark → teal → orange peaks (WD1 ctOS scan).
+  // Monochrome spectrum: dark → white (greyscale surveillance).
   const t = Math.max(0, Math.min(1, (dbfs + 110) / 100));
-  if (t < 0.5) { const k = t * 2; return `rgb(${5 + k * 26 | 0},${8 + k * 206 | 0},${11 + k * 196 | 0})`; }
-  const k = (t - 0.5) * 2; return `rgb(${31 + k * 224 | 0},${214 - k * 92 | 0},${207 - k * 181 | 0})`;
+  const v = 10 + (t * 228) | 0;
+  return `rgb(${v},${v},${v + 3})`;
 }
 function pushWaterfall(p) {
   const cv = $('#waterfall'), ctx = cv.getContext('2d'), w = cv.width, h = cv.height;
@@ -183,6 +186,73 @@ function tickClock() {
   if (c) c.textContent = new Date().toLocaleTimeString([], { hour12: false });
 }
 setInterval(tickClock, 1000); tickClock();
+
+// ── Sound (Web Audio, synthesized — unlocked on first user gesture) ──────────
+let actx = null;
+let muted = localStorage.getItem('ctosMuted') === '1';
+function audioCtx() {
+  if (!actx) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
+  if (actx && actx.state === 'suspended') actx.resume();
+  return actx;
+}
+function blip(freq = 640, dur = 0.05, type = 'square', gain = 0.03) {
+  if (muted) return; const a = audioCtx(); if (!a) return;
+  const o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.value = freq; o.connect(g); g.connect(a.destination);
+  const t = a.currentTime; g.gain.setValueAtTime(gain, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.start(t); o.stop(t + dur);
+}
+function noiseBurst(dur = 0.14, gain = 0.04, freq = 1100) {
+  if (muted) return; const a = audioCtx(); if (!a) return;
+  const n = (a.sampleRate * dur) | 0, buf = a.createBuffer(1, n, a.sampleRate), d = buf.getChannelData(0);
+  for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+  const s = a.createBufferSource(); s.buffer = buf;
+  const f = a.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = freq;
+  const g = a.createGain(); g.gain.value = gain;
+  s.connect(f); f.connect(g); g.connect(a.destination); s.start();
+}
+function setMuted(m) {
+  muted = m; localStorage.setItem('ctosMuted', m ? '1' : '0');
+  const b = $('#sndToggle'); if (b) { b.classList.toggle('muted', m); b.textContent = m ? '♪ MUTE' : '♪ SND'; }
+}
+$('#sndToggle')?.addEventListener('click', () => { const m = !muted; setMuted(m); if (!m) blip(720, 0.05); });
+setMuted(muted);
+// keystroke + button blips
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('button');
+  if (btn && btn.id !== 'sndToggle') blip(btn.classList.contains('danger') ? 300 : 620, 0.045);
+});
+document.addEventListener('keydown', () => blip(520, 0.02, 'square', 0.014));
+
+// ── Glitch: monochrome RGB-tear sweep (red stays on the skull) ───────────────
+function fireTear() {
+  const t = $('#tear'); if (t) { t.classList.remove('fire'); void t.offsetWidth; t.classList.add('fire'); }
+  document.body.classList.add('glitching');
+  setTimeout(() => document.body.classList.remove('glitching'), 320);
+  noiseBurst(0.09, 0.022, 1700);
+}
+function scheduleTear() {
+  const delay = 9000 + Math.random() * 9000;
+  setTimeout(() => { if (!$('#boot').offsetParent) fireTear(); scheduleTear(); }, delay);
+}
+scheduleTear();
+
+// ── Boot intro ("we are dedsec / you are being watched") ─────────────────────
+function runBoot() {
+  const b = $('#boot'); if (!b) return;
+  b.style.display = 'flex'; b.classList.remove('out'); void b.offsetWidth;
+  let done = false;
+  const finish = () => {
+    if (done) return; done = true;
+    audioCtx(); noiseBurst(0.25, 0.05, 500); blip(880, 0.08, 'sawtooth', 0.025);
+    b.classList.add('out'); b.removeEventListener('click', finish);
+    setTimeout(() => { b.style.display = 'none'; }, 650);
+  };
+  b.addEventListener('click', finish);
+  clearTimeout(b._t); b._t = setTimeout(finish, 6200);
+}
+$('#replayIntro')?.addEventListener('click', runBoot);
+runBoot();
 
 // ── Boot ─────────────────────────────────────────────────────────────────────
 connect();

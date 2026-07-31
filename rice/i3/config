@@ -6,10 +6,10 @@ set $mod Mod4
 font pango:monospace 10
 
 # DedSec colors:          border   bg       text     indicator child_border
-client.focused          #1fd6cf #05080b #e8f0f1 #ff7a1a  #1fd6cf
-client.focused_inactive #0e8f8c #05080b #566e74 #0e8f8c  #0e8f8c
-client.unfocused        #123038 #05080b #566e74 #123038  #123038
-client.urgent           #ff2f2f #05080b #e8f0f1 #ff2f2f  #ff2f2f
+client.focused          #d7dbdc #060809 #eef1f2 #9aa0a2  #d7dbdc
+client.focused_inactive #6a7073 #060809 #4c5254 #6a7073  #6a7073
+client.unfocused        #23282b #060809 #4c5254 #23282b  #23282b
+client.urgent           #787e80 #060809 #eef1f2 #787e80  #787e80
 
 gaps inner 6
 gaps outer 8

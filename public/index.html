@@ -9,22 +9,89 @@
 <body>
   <div class="scanlines" aria-hidden="true"></div>
   <div class="noise" aria-hidden="true"></div>
+  <div class="crt" aria-hidden="true"></div>
+  <div class="dither" aria-hidden="true"></div>
+  <div class="tear" id="tear" aria-hidden="true"></div>
+
+  <!-- shared DedSec graphics: 1-bit hatch/dither, grey/black + neon-red skull -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <filter id="grit" x="-30%" y="-30%" width="160%" height="160%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7" result="n"/>
+        <feDisplacementMap in="SourceGraphic" in2="n" scale="2.2" xChannelSelector="R" yChannelSelector="G"/>
+      </filter>
+      <!-- diagonal engraving hatch (grey) -->
+      <pattern id="hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <rect width="5" height="5" fill="#9aa0a2"/>
+        <rect width="2.3" height="5" fill="#2b2f31"/>
+      </pattern>
+      <!-- tiled field of skulls for the boot background -->
+      <pattern id="skulltile" width="46" height="46" patternUnits="userSpaceOnUse">
+        <rect width="46" height="46" fill="#08090b"/>
+        <path transform="translate(9,8) scale(0.45)" fill="#1c2224" d="M32 4 C19 4 10 13 10 27 c0 8 3 13 7 17 l0 6 c0 2 2 4 4 4 l22 0 c2 0 4-2 4-4 l0-6 c4-4 7-9 7-17 C54 13 45 4 32 4 Z"/>
+        <g transform="translate(9,8) scale(0.45)" fill="#08090b"><circle cx="24" cy="26" r="5"/><circle cx="40" cy="26" r="5"/></g>
+      </pattern>
+      <!-- header skull (small) -->
+      <symbol id="ds-skull" viewBox="0 0 64 64">
+        <g class="ds-skull" filter="url(#grit)">
+          <path class="s-cranium" d="M32 4 C19 4 10 13 10 27 c0 8 3 13 7 17 l0 6 c0 2 2 4 4 4 l22 0 c2 0 4-2 4-4 l0-6 c4-4 7-9 7-17 C54 13 45 4 32 4 z"/>
+          <polygon class="s-eye" points="16,23 27,20 28,28 23,32 18,31"/>
+          <polygon class="s-eye" points="48,23 37,20 36,28 41,32 46,31"/>
+          <polygon class="s-nose" points="32,31 28,39 32,42 36,39"/>
+          <g class="s-teeth">
+            <rect x="24" y="47" width="3" height="7"/><rect x="29" y="47" width="3" height="8"/>
+            <rect x="34" y="47" width="3" height="8"/><rect x="39" y="47" width="3" height="7"/>
+          </g>
+          <rect class="s-mark" x="9" y="18" width="12" height="2"/>
+          <circle class="s-spray" cx="52" cy="15" r="1"/><circle class="s-spray" cx="12" cy="45" r="1.3"/>
+        </g>
+      </symbol>
+      <!-- hooded reaper (boot hero) -->
+      <symbol id="reaper" viewBox="0 0 160 172">
+        <g filter="url(#grit)">
+          <path class="r-robe" d="M12 164 C12 122 35 103 58 100 C60 84 70 71 80 71 C90 71 100 84 102 100 C125 103 148 122 148 164 Z"/>
+          <path class="r-hood" d="M80 12 C53 12 37 37 41 68 C43 86 55 100 72 104 L88 104 C105 100 117 86 119 68 C123 37 107 12 80 12 Z"/>
+          <path class="r-cav" d="M80 33 C59 33 49 52 52 72 C54 88 66 98 80 98 C94 98 106 88 108 72 C111 52 101 33 80 33 Z"/>
+          <g class="r-skull">
+            <path class="rs-cranium" d="M80 45 C68 45 60 54 60 66 c0 5 2 8 5 11 l0 4 c0 1 1 2 2 2 l26 0 c1 0 2-1 2-2 l0-4 c3-3 5-6 5-11 C100 54 92 45 80 45 Z"/>
+            <circle class="rs-eye" cx="71" cy="65" r="4.6"/>
+            <circle class="rs-eye" cx="89" cy="65" r="4.6"/>
+            <polygon class="rs-nose" points="80,67 76,75 84,75"/>
+            <g class="rs-teeth">
+              <rect x="72" y="79" width="2.4" height="6"/><rect x="77" y="79" width="2.4" height="7"/>
+              <rect x="82" y="79" width="2.4" height="7"/><rect x="86.6" y="79" width="2.4" height="6"/>
+            </g>
+          </g>
+        </g>
+      </symbol>
+    </defs>
+  </svg>
+
+  <!-- boot intro: hooded reaper + graffiti wordmark on a dithered field of skulls -->
+  <div id="boot" class="boot">
+    <svg class="boot-bg" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect width="100%" height="100%" fill="url(#skulltile)"/></svg>
+    <div class="boot-static" aria-hidden="true"></div>
+    <div class="boot-inner">
+      <svg class="boot-reaper" viewBox="0 0 160 172" aria-hidden="true"><use href="#reaper"/></svg>
+      <svg class="boot-word" viewBox="0 0 380 96" aria-hidden="true">
+        <text x="190" y="70" class="ds-word" data-text="DEDSEC">DEDSEC</text>
+      </svg>
+      <div class="boot-lines">
+        <div class="bl bl3" data-text="YOU ARE BEING WATCHED">YOU ARE BEING WATCHED</div>
+        <div class="bl bl4">— now watch your own.</div>
+      </div>
+      <button id="bootEnter" class="boot-enter">▶ BOOT ctOS</button>
+    </div>
+  </div>
+
+  <div id="hud-controls">
+    <button id="sndToggle" title="sound">♪ SND</button>
+    <button id="replayIntro" title="replay intro">↻ INTRO</button>
+  </div>
 
   <header class="hud">
     <div class="brand">
-      <svg class="skull" viewBox="0 0 64 64" aria-hidden="true">
-        <path class="s-cranium" d="M32 5 C18 5 9 15 9 29 c0 8 4 13 8 17 v6 c0 2 2 4 4 4 h22 c2 0 4-2 4-4 v-6 c4-4 8-9 8-17 C55 15 46 5 32 5 z"/>
-        <polygon class="s-eye" points="17,24 27,22 27,31 19,33"/>
-        <polygon class="s-eye" points="47,24 37,22 37,31 45,33"/>
-        <polygon class="s-nose" points="32,33 28,41 36,41"/>
-        <g class="s-teeth">
-          <rect x="23" y="47" width="3" height="7"/>
-          <rect x="28" y="47" width="3" height="8"/>
-          <rect x="33" y="47" width="3" height="8"/>
-          <rect x="38" y="47" width="3" height="7"/>
-        </g>
-        <rect class="s-mark" x="9" y="19" width="11" height="2"/>
-      </svg>
+      <svg class="skull" viewBox="0 0 64 64" aria-hidden="true"><use href="#ds-skull"/></svg>
       <div class="brandtext">
         <span class="title" data-text="DEDSEC">DEDSEC</span>
         <span class="sub">ctOS // command your own domain</span>

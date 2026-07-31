@@ -15,11 +15,11 @@ const ONCE = process.argv.includes('--once');
 const E = '\x1b[';
 const fg = (r, g, b) => `${E}38;2;${r};${g};${b}m`;
 const RESET = `${E}0m`;
-// DedSec (Watch Dogs 1): cold teal primary + orange alert accent.
+// DedSec greyscale: monochrome surveillance (no colour; brightness = state).
 const C = {
-  cyan: fg(31, 214, 207), dim: fg(14, 143, 140), amber: fg(255, 122, 26),
-  red: fg(255, 47, 47), green: fg(37, 211, 156), text: fg(188, 205, 209),
-  muted: fg(86, 110, 116), white: fg(232, 240, 241),
+  cyan: fg(215, 219, 220), dim: fg(106, 112, 115), amber: fg(150, 156, 158),
+  red: fg(178, 184, 186), green: fg(238, 241, 242), text: fg(174, 180, 182),
+  muted: fg(76, 82, 84), white: fg(238, 241, 242),
 };
 const at = (x, y) => `${E}${y + 1};${x + 1}H`;
 const strip = (s) => s.replace(/\x1b\[[0-9;]*m/g, '');
@@ -91,10 +91,10 @@ function panel(x, y, w, h, title) {
 function line(x, y, s, w) { write(x, y, padEnd(s, w)); }
 
 function powerColor(dbfs) {
-  // DedSec spectrum: dark → teal → orange peaks.
+  // Monochrome spectrum: dark → white.
   const t = Math.max(0, Math.min(1, (dbfs + 110) / 100));
-  if (t < 0.5) { const k = t * 2; return fg(Math.round(5 + 26 * k), Math.round(8 + 206 * k), Math.round(11 + 196 * k)); }
-  const k = (t - 0.5) * 2; return fg(Math.round(31 + 224 * k), Math.round(214 - 92 * k), Math.round(207 - 181 * k));
+  const v = Math.round(10 + 228 * t);
+  return fg(v, v, v + 3);
 }
 
 function render() {
