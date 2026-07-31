@@ -1,0 +1,13 @@
+[SddmGreeterTheme]
+Name=ctOS DedSec
+Description=Greyscale DedSec login — command your own domain
+Author=ctOS
+License=MIT
+Type=sddm-theme
+Version=1.0
+Website=https://github.com/timurmomani0-glitch/Watchdogs
+Screenshot=background.png
+MainScript=Main.qml
+ConfigFile=theme.conf
+TranslationsDirectory=
+Email=

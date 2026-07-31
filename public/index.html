@@ -18,19 +18,35 @@
     <defs>
       <filter id="grit" x="-30%" y="-30%" width="160%" height="160%">
         <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7" result="n"/>
-        <feDisplacementMap in="SourceGraphic" in2="n" scale="2.2" xChannelSelector="R" yChannelSelector="G"/>
+        <feDisplacementMap in="SourceGraphic" in2="n" scale="2.4" xChannelSelector="R" yChannelSelector="G"/>
       </filter>
+      <!-- heavier grit for the boot hero (hand-sprayed edges) -->
+      <filter id="grit2" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="3" seed="3" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="3.5"/>
+    </filter>
+      <!-- rough spray for the graffiti wordmark -->
+      <filter id="rough" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="3" seed="9" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="4"/>
+    </filter>
       <!-- diagonal engraving hatch (grey) -->
-      <pattern id="hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-        <rect width="5" height="5" fill="#9aa0a2"/>
-        <rect width="2.3" height="5" fill="#2b2f31"/>
-      </pattern>
+      <pattern id="hatch" width="11" height="11" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="11" height="11" fill="#ccd2d4"/><rect width="5" height="11" fill="#1b2024"/>
+    </pattern>
       <!-- tiled field of skulls for the boot background -->
-      <pattern id="skulltile" width="46" height="46" patternUnits="userSpaceOnUse">
-        <rect width="46" height="46" fill="#08090b"/>
-        <path transform="translate(9,8) scale(0.45)" fill="#1c2224" d="M32 4 C19 4 10 13 10 27 c0 8 3 13 7 17 l0 6 c0 2 2 4 4 4 l22 0 c2 0 4-2 4-4 l0-6 c4-4 7-9 7-17 C54 13 45 4 32 4 Z"/>
-        <g transform="translate(9,8) scale(0.45)" fill="#08090b"><circle cx="24" cy="26" r="5"/><circle cx="40" cy="26" r="5"/></g>
-      </pattern>
+      <pattern id="skulltile" width="86" height="86" patternUnits="userSpaceOnUse" patternTransform="rotate(-8)">
+      <rect width="86" height="86" fill="#0a0c0e"/>
+      <g transform="translate(12,10) scale(0.95)" fill="#252b2f">
+        <path d="M32 2 C17 2 7 13 7 28 c0 9 4 15 9 19 l0 7 c0 2 2 4 4 4 l24 0 c2 0 4-2 4-4 l0-7 c5-4 9-10 9-19 C57 13 47 2 32 2 Z"/>
+      </g>
+      <g transform="translate(12,10) scale(0.95)" fill="#0a0c0e">
+        <ellipse cx="22" cy="27" rx="6" ry="7"/><ellipse cx="42" cy="27" rx="6" ry="7"/>
+        <polygon points="32,32 28,41 36,41"/>
+        <rect x="22" y="48" width="3" height="8"/><rect x="28" y="48" width="3" height="8"/>
+        <rect x="34" y="48" width="3" height="8"/><rect x="40" y="48" width="3" height="8"/>
+      </g>
+    </pattern>
       <!-- header skull (small) -->
       <symbol id="ds-skull" viewBox="0 0 64 64">
         <g class="ds-skull" filter="url(#grit)">
@@ -46,22 +62,30 @@
           <circle class="s-spray" cx="52" cy="15" r="1"/><circle class="s-spray" cx="12" cy="45" r="1.3"/>
         </g>
       </symbol>
-      <!-- hooded reaper (boot hero) -->
-      <symbol id="reaper" viewBox="0 0 160 172">
-        <g filter="url(#grit)">
-          <path class="r-robe" d="M12 164 C12 122 35 103 58 100 C60 84 70 71 80 71 C90 71 100 84 102 100 C125 103 148 122 148 164 Z"/>
-          <path class="r-hood" d="M80 12 C53 12 37 37 41 68 C43 86 55 100 72 104 L88 104 C105 100 117 86 119 68 C123 37 107 12 80 12 Z"/>
-          <path class="r-cav" d="M80 33 C59 33 49 52 52 72 C54 88 66 98 80 98 C94 98 106 88 108 72 C111 52 101 33 80 33 Z"/>
+      <!-- hooded reaper (boot hero) — tattered robe, drips, spray splatter -->
+      <symbol id="reaper" viewBox="0 0 180 196">
+        <g filter="url(#grit2)">
+          <path class="r-robe" d="M18 182 C18 132 42 106 66 101 C68 84 78 70 90 70 C102 70 112 84 114 101 C138 106 162 132 162 182 L154 172 L148 185 L140 170 L133 184 L125 169 L117 183 L109 170 L101 185 L92 171 L84 184 L76 170 L68 183 L60 170 L52 184 L44 171 L36 183 L28 170 Z"/>
+          <path class="r-hood" d="M90 12 C61 12 44 39 48 72 C50 91 62 106 80 110 L100 110 C118 106 130 91 132 72 C136 39 119 12 90 12 Z"/>
+          <path class="r-cav" d="M90 34 C68 34 57 55 60 77 C62 94 75 105 90 105 C105 105 118 94 120 77 C123 55 112 34 90 34 Z"/>
           <g class="r-skull">
-            <path class="rs-cranium" d="M80 45 C68 45 60 54 60 66 c0 5 2 8 5 11 l0 4 c0 1 1 2 2 2 l26 0 c1 0 2-1 2-2 l0-4 c3-3 5-6 5-11 C100 54 92 45 80 45 Z"/>
-            <circle class="rs-eye" cx="71" cy="65" r="4.6"/>
-            <circle class="rs-eye" cx="89" cy="65" r="4.6"/>
-            <polygon class="rs-nose" points="80,67 76,75 84,75"/>
+            <path class="rs-cranium" d="M90 47 C77 47 68 57 68 70 c0 6 2 9 5 12 l0 5 c0 1 1 2 2 2 l30 0 c1 0 2-1 2-2 l0-5 c3-3 5-6 5-12 C112 57 103 47 90 47 Z"/>
+            <circle class="rs-eye" cx="80" cy="69" r="5.2"/>
+            <circle class="rs-eye" cx="100" cy="69" r="5.2"/>
+            <polygon class="rs-nose" points="90,71 85,80 95,80"/>
             <g class="rs-teeth">
-              <rect x="72" y="79" width="2.4" height="6"/><rect x="77" y="79" width="2.4" height="7"/>
-              <rect x="82" y="79" width="2.4" height="7"/><rect x="86.6" y="79" width="2.4" height="6"/>
+              <rect x="81" y="85" width="2.6" height="7"/><rect x="86.5" y="85" width="2.6" height="8"/>
+              <rect x="92" y="85" width="2.6" height="8"/><rect x="97" y="85" width="2.6" height="7"/>
             </g>
+            <rect class="rs-drip" x="79" y="74" width="2" height="13"/>
+            <rect class="rs-drip" x="99.5" y="74" width="2" height="9"/>
           </g>
+          <rect class="r-drip" x="60" y="182" width="2" height="9"/>
+          <rect class="r-drip" x="118" y="182" width="2" height="7"/>
+          <rect class="r-drip" x="90" y="185" width="2" height="9"/>
+          <circle class="r-splat" cx="30" cy="60" r="1.6"/><circle class="r-splat" cx="150" cy="70" r="1.4"/>
+          <circle class="r-splat" cx="24" cy="120" r="1.2"/><circle class="r-splat" cx="158" cy="128" r="1.6"/>
+          <circle class="r-splat" cx="42" cy="30" r="1"/><circle class="r-splat" cx="140" cy="26" r="1.2"/>
         </g>
       </symbol>
     </defs>
@@ -72,10 +96,84 @@
     <svg class="boot-bg" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect width="100%" height="100%" fill="url(#skulltile)"/></svg>
     <div class="boot-static" aria-hidden="true"></div>
     <div class="boot-inner">
-      <svg class="boot-reaper" viewBox="0 0 160 172" aria-hidden="true"><use href="#reaper"/></svg>
-      <svg class="boot-word" viewBox="0 0 380 96" aria-hidden="true">
-        <text x="190" y="70" class="ds-word" data-text="DEDSEC">DEDSEC</text>
-      </svg>
+      <svg class="boot-emblem" viewBox="0 0 900 620">
+      <!-- ── hooded reaper, arms spread ─────────────────────────────────── -->
+      <g filter="url(#grit2)">
+        <!-- one silhouette: hood → shoulders → arms spread wide → ragged hem -->
+        <path class="fig-body" d="
+          M450 40
+          C382 40 338 92 344 168
+          C347 200 358 226 376 244
+          C300 258 216 292 166 348
+          C132 386 116 430 112 470
+          L150 452 L146 492 L182 466 L186 506 L222 476 L230 514
+          L266 484 L276 520 L312 490 L322 524 L358 496 L370 528
+          L406 500 L418 530 L450 504 L482 530 L494 500 L530 528
+          L542 496 L578 524 L588 490 L624 520 L634 484 L670 514
+          L678 476 L714 506 L718 466 L754 492 L750 452 L788 470
+          C784 430 768 386 734 348
+          C684 292 600 258 524 244
+          C542 226 553 200 556 168
+          C562 92 518 40 450 40 Z"/>
+        <!-- face cavity -->
+        <path class="fig-cav" d="M450 78 C398 78 372 118 378 166 C383 208 412 236 450 236 C488 236 517 208 522 166 C528 118 502 78 450 78 Z"/>
+      </g>
+
+      <!-- skull inside the hood -->
+      <g class="sk-glow">
+        <g filter="url(#grit2)">
+          <path class="sk-dome" d="M450 104 C418 104 396 128 396 160 c0 15 6 25 14 32 l0 12 c0 4 3 7 7 7 l66 0 c4 0 7-3 7-7 l0-12 c8-7 14-17 14-32 C504 128 482 104 450 104 Z"/>
+          <ellipse class="sk-hole" cx="428" cy="156" rx="13" ry="15"/>
+          <ellipse class="sk-hole" cx="472" cy="156" rx="13" ry="15"/>
+          <polygon class="sk-hole" points="450,164 440,186 460,186"/>
+          <g class="sk-hole">
+            <rect x="424" y="196" width="6" height="18"/><rect x="435" y="196" width="6" height="20"/>
+            <rect x="446" y="196" width="6" height="20"/><rect x="457" y="196" width="6" height="20"/>
+            <rect x="468" y="196" width="6" height="18"/>
+          </g>
+          <rect class="sk-drip" x="425" y="170" width="5" height="30"/>
+          <rect class="sk-drip" x="470" y="170" width="5" height="21"/>
+        </g>
+      </g>
+
+      <!-- ── chunky overlapping graffiti wordmark, across the figure ─────── -->
+      <g filter="url(#rough)" transform="translate(0,26) rotate(-3 450 430)">
+        <!-- D -->
+        <g transform="translate(28,352) rotate(-4) scale(1.16)">
+          <path class="wm" d="M8 6 L60 10 C92 16 106 46 104 78 C102 116 80 140 44 142 L4 140 Z
+                              M36 40 L52 43 C68 48 71 62 69 76 C67 92 58 100 42 100 L34 100 Z"/>
+        </g>
+        <!-- E -->
+        <g transform="translate(158,368) rotate(3) scale(1.16)">
+          <path class="wm" d="M10 8 L100 2 L98 32 L44 35 L44 56 L88 53 L86 79 L44 79 L44 104 L102 100 L100 132 L6 134 Z"/>
+        </g>
+        <!-- D -->
+        <g transform="translate(292,346) rotate(-2) scale(1.16)">
+          <path class="wm" d="M8 6 L60 10 C92 16 106 46 104 78 C102 116 80 140 44 142 L4 140 Z
+                              M36 40 L52 43 C68 48 71 62 69 76 C67 92 58 100 42 100 L34 100 Z"/>
+        </g>
+        <!-- S -->
+        <g transform="translate(424,366) rotate(4) scale(1.16)">
+          <path class="wm" d="M98 24 C80 6 30 2 16 26 C2 50 12 74 46 82 C72 88 82 94 77 106
+                              C72 118 44 118 20 104 L10 132 C40 148 92 146 104 118
+                              C117 88 99 68 62 58 C40 52 33 45 38 35 C43 25 72 28 92 42 Z"/>
+        </g>
+        <!-- E -->
+        <g transform="translate(556,350) rotate(-3) scale(1.16)">
+          <path class="wm" d="M10 8 L100 2 L98 32 L44 35 L44 56 L88 53 L86 79 L44 79 L44 104 L102 100 L100 132 L6 134 Z"/>
+        </g>
+        <!-- C -->
+        <g transform="translate(688,366) rotate(2) scale(1.16)">
+          <path class="wm" d="M100 30 C82 8 34 4 18 34 C2 64 10 108 42 128 C66 143 92 136 106 120
+                              L90 96 C80 106 60 111 48 98 C34 82 34 50 48 40 C60 31 76 34 86 46 Z"/>
+        </g>
+        <!-- paint drips off the letters -->
+        <rect class="wm-drip" x="96"  y="492" width="9" height="46"/>
+        <rect class="wm-drip" x="352" y="500" width="8" height="34"/>
+        <rect class="wm-drip" x="590" y="496" width="9" height="52"/>
+        <rect class="wm-drip" x="806" y="504" width="8" height="30"/>
+      </g>
+    </svg>
       <div class="boot-lines">
         <div class="bl bl3" data-text="YOU ARE BEING WATCHED">YOU ARE BEING WATCHED</div>
         <div class="bl bl4">— now watch your own.</div>
