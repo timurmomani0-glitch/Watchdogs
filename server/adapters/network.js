@@ -36,17 +36,45 @@ function mockDiscover(cidr = '192.168.1.0/24') {
   return hosts;
 }
 
+function parseArpScan(stdout) {
+  // Linux `arp-scan --localnet`: "192.168.1.10  aa:bb:cc:dd:ee:ff  Vendor"
+  return stdout.split('\n')
+    .map((l) => l.match(/^(\d+\.\d+\.\d+\.\d+)\s+([0-9a-f:]{17})\s+(.*)$/i))
+    .filter(Boolean)
+    .map((m) => ({ ip: m[1], mac: m[2].toLowerCase(), vendor: m[3].trim(), kind: 'host', online: true }));
+}
+
+function isBogusArp(ip, mac) {
+  if (mac === 'ff:ff:ff:ff:ff:ff' || mac === '00:00:00:00:00:00') return true; // broadcast / invalid
+  if (mac.startsWith('01:00:5e') || mac.startsWith('33:33')) return true;       // IPv4 / IPv6 multicast
+  const o = ip.split('.').map(Number);
+  return o[0] >= 224 || ip.endsWith('.255') || ip === '255.255.255.255';        // multicast / broadcast IPs
+}
+
+function parseWindowsArp(stdout) {
+  // Windows `arp -a`: "  192.168.1.10   aa-bb-cc-dd-ee-ff   dynamic". Match on
+  // IP + MAC ONLY — the trailing Type column ("dynamic"/"static") is localized
+  // (e.g. Russian/CJK) and must not be part of the match. `arp -a` is IPv4-only
+  // (ARP has no IPv6); IPv6 neighbours are not discovered on this path. The ARP
+  // cache also holds multicast/broadcast entries, which isBogusArp drops.
+  return stdout.split('\n')
+    .map((l) => l.match(/^\s*(\d+\.\d+\.\d+\.\d+)\s+([0-9a-f]{2}(?:-[0-9a-f]{2}){5})/i))
+    .filter(Boolean)
+    .map((m) => ({ ip: m[1], mac: m[2].replace(/-/g, ':').toLowerCase(), vendor: '', kind: 'host', online: true }))
+    .filter((h) => !isBogusArp(h.ip, h.mac));
+}
+
 function liveDiscover(cidr) {
+  // Cross-platform: Linux/mac use arp-scan (active), Windows reads the ARP cache
+  // via `arp -a`. Either way the scope gate has already authorized the CIDR.
   return new Promise((resolve) => {
-    // arp-scan is fast + reliable on a LAN; requires CAP_NET_RAW or sudo.
-    execFile('arp-scan', ['--localnet', '--quiet'], { timeout: 15000 }, (err, stdout) => {
+    const win = process.platform === 'win32';
+    const cmd = win ? 'arp' : 'arp-scan';
+    const args = win ? ['-a'] : ['--localnet', '--quiet'];
+    execFile(cmd, args, { timeout: 15000, windowsHide: true }, (err, stdout) => {
       if (err) return resolve(mockDiscover(cidr)); // graceful fallback
-      const hosts = stdout
-        .split('\n')
-        .map((l) => l.match(/^(\d+\.\d+\.\d+\.\d+)\s+([0-9a-f:]{17})\s+(.*)$/i))
-        .filter(Boolean)
-        .map((m) => ({ ip: m[1], mac: m[2], vendor: m[3].trim(), kind: 'host', online: true }));
-      resolve(hosts);
+      const hosts = win ? parseWindowsArp(stdout) : parseArpScan(stdout);
+      resolve(hosts.length ? hosts : mockDiscover(cidr));
     });
   });
 }
