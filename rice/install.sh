@@ -22,6 +22,12 @@ mkdir -p "$CFG/ctos"
 install -m 0755 "$RICE_DIR/kiosk/launch-ctos.sh" "$CFG/ctos/launch-ctos.sh"
 say "installed launcher  → $CFG/ctos/launch-ctos.sh"
 
+# DedSec artwork used by the lock screen
+for art in dedsec-mask.png dedsec-reaper.png dedsec-logo.png; do
+    [ -f "$REPO_DIR/public/$art" ] && install -m 0644 "$REPO_DIR/public/$art" "$CFG/ctos/$art"
+done
+say "installed artwork   → $CFG/ctos/dedsec-*.png"
+
 # 2) Hyprland configs (with __REPO__ substituted, harmless if absent)
 mkdir -p "$CFG/hypr"
 for f in hyprland.conf hyprlock.conf hypridle.conf; do

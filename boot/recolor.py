@@ -75,6 +75,31 @@ def apply_skull(img, grey, ellipse, feather=6):
     return img
 
 
+def scrim(img, start=0.5, strength=0.86):
+    """Fade the frame toward black from `start` (0-1) downward, so overlaid
+    menu/login text stays readable over bright artwork."""
+    w, h = img.size
+    o = img.load()
+    y0 = int(h * start)
+    for y in range(y0, h):
+        k = (y - y0) / max(1, (h - y0))          # 0 at start -> 1 at bottom
+        f = 1.0 - strength * (k ** 1.4)
+        for x in range(w):
+            r, g, b = o[x, y]
+            o[x, y] = (int(r * f), int(g * f), int(b * f))
+    return img
+
+
+def cover(img, size=(1920, 1080)):
+    """Scale to fill the frame, cropping the overflow (for wallpapers)."""
+    sw, sh = img.size
+    k = max(size[0] / sw, size[1] / sh)
+    r = img.resize((int(sw * k + 0.5), int(sh * k + 0.5)), Image.LANCZOS)
+    x = (r.width - size[0]) // 2
+    y = (r.height - size[1]) // 2
+    return r.crop((x, y, x + size[0], y + size[1]))
+
+
 def frame(img, size=(1920, 1080), scale=0.66):
     canvas = Image.new("RGB", size, BG)
     tw = int(size[0] * scale)
@@ -95,7 +120,15 @@ def main():
     ap.add_argument("--contrast", type=float, default=1.25)
     ap.add_argument("--feather", type=int, default=6)
     ap.add_argument("--bg", action="store_true", help="also write the 1920x1080 backgrounds")
+    ap.add_argument("--bg-out", action="append", default=[],
+                    help="repo-relative path for a 1920x1080 background (repeatable). "
+                         "Without it, --bg writes both the GRUB and SDDM backgrounds.")
+    ap.add_argument("--cover", action="store_true",
+                    help="fill the whole 1920x1080 frame (crop to fit) instead of centring")
     ap.add_argument("--scale", type=float, default=0.66)
+    ap.add_argument("--scrim", type=float, default=None,
+                    help="darken the frame from this height fraction downward (e.g. 0.5) "
+                         "so overlaid menu/login text stays readable")
     a = ap.parse_args()
 
     src = Image.open(a.src).convert("RGB")
@@ -112,10 +145,14 @@ def main():
     img.save(logo)
     print(f"wrote {logo}")
 
-    if a.bg:
-        bgim = frame(img, scale=a.scale)
-        for p in (os.path.join(ROOT, "boot", "grub", "dedsec", "background.png"),
-                  os.path.join(ROOT, "boot", "greeter", "sddm-dedsec", "background.png")):
+    if a.bg or a.bg_out:
+        bgim = cover(img) if a.cover else frame(img, scale=a.scale)
+        if a.scrim is not None:
+            bgim = scrim(bgim, a.scrim)
+        targets = [os.path.join(ROOT, p) for p in a.bg_out] or [
+            os.path.join(ROOT, "boot", "grub", "dedsec", "background.png"),
+            os.path.join(ROOT, "boot", "greeter", "sddm-dedsec", "background.png")]
+        for p in targets:
             os.makedirs(os.path.dirname(p), exist_ok=True)
             bgim.save(p)
             print(f"wrote {p}  1920x1080")
