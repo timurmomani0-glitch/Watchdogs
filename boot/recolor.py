@@ -1,137 +1,124 @@
 #!/usr/bin/env python3
 """
-1:1 recolor of the DedSec source logo into the ctOS palette.
+1:1 recolor of a DedSec source image into the ctOS palette.
 
-Takes YOUR image and remaps colours pixel-for-pixel — the artwork, dither, and
-every edge stay exactly as drawn. Nothing is redrawn.
+The artwork is NOT redrawn. Every pixel keeps its original luminance
+relationship, so all dither, glitch streaks and edges survive exactly; only the
+colours are remapped:
 
-  purple / coloured background  ->  black + dark grey bands
-  white / light art (figure+tag) ->  light grey
-  the skull                      ->  NEON RED
+    black .......... #060809   (ctOS background)
+    greys/whites ... grey ramp up to #eef1f2
+    the skull ...... NEON RED ramp (elliptical mask, soft edge)
 
-Usage:
-    python3 boot/recolor.py boot/source-logo.png
-    python3 boot/recolor.py boot/source-logo.png --skull x,y,w,h   # exact skull box
-    python3 boot/recolor.py boot/source-logo.png --no-skull        # skip red pass
+Usage
+    python3 boot/recolor.py SRC --out NAME [options]
 
-Writes:
-    boot/grub/dedsec/background.png        (1920x1080, centred on black)
-    boot/greeter/sddm-dedsec/background.png
-    public/dedsec-logo.png                 (trimmed, used by the dashboard boot)
+    --skull cx,cy,rx,ry   ellipse (source px) whose bright pixels turn neon red
+    --contrast F          luma contrast boost, default 1.25
+    --bg                  also emit a 1920x1080 background (centred on black)
+    --scale F             logo size on that background, default 0.66
+
+Examples
+    python3 boot/recolor.py "boot/images.jpg" --out dedsec-logo \
+        --skull 312,105,30,29 --bg
 """
-import sys, os, colorsys
-from PIL import Image, ImageFilter
+import argparse, os
+from PIL import Image, ImageDraw, ImageFilter
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# ctOS palette
-BG_DARK   = (10, 13, 16)     # background base
-BG_BAND   = (23, 28, 33)     # the lighter scanline band
-ART_LIGHT = (233, 237, 238)  # the white/dithered artwork
-ART_MID   = (150, 156, 158)
-SKULL_RED = (255, 26, 53)    # neon red — skull only
-SKULL_DK  = (141, 0, 22)
+BG        = (6, 8, 9)        # darkest
+GREY_HI   = (238, 241, 242)  # brightest
+RED_HI    = (255, 26, 53)    # neon red
+RED_MID   = (150, 0, 24)
 
 
-def luma(p):
-    return 0.299 * p[0] + 0.587 * p[1] + 0.114 * p[2]
-
-
-def is_coloured(p, sat_thresh=0.25):
-    """True for saturated pixels (the purple field) — greys/whites are not."""
-    h, l, s = colorsys.rgb_to_hls(p[0] / 255, p[1] / 255, p[2] / 255)
-    return s > sat_thresh
-
-
-def recolor(src_path, skull_box=None, do_skull=True):
-    im = Image.open(src_path).convert("RGB")
-    w, h = im.size
-    px = im.load()
-
-    out = Image.new("RGB", (w, h))
-    o = out.load()
-
+def luma_map(src, contrast=1.25):
+    """Greyscale the image and remap luma onto the ctOS grey ramp, 1:1."""
+    g = src.convert("L")
+    # contrast around mid-grey, keeps the 1-bit crunch of the original dither
+    g = g.point(lambda v: max(0, min(255, int((v - 128) * contrast + 128))))
+    out = Image.new("RGB", src.size)
+    o, gp = out.load(), g.load()
+    w, h = src.size
     for y in range(h):
         for x in range(w):
-            p = px[x, y]
-            L = luma(p)
-            if is_coloured(p):
-                # background field: keep its banding by using its own luma
-                t = L / 255.0
-                o[x, y] = tuple(
-                    int(BG_DARK[i] + (BG_BAND[i] - BG_DARK[i]) * min(1.0, t * 1.9))
-                    for i in range(3)
-                )
+            t = gp[x, y] / 255.0
+            o[x, y] = tuple(int(BG[i] + (GREY_HI[i] - BG[i]) * t) for i in range(3))
+    return out, g
+
+
+def apply_skull(img, grey, ellipse, feather=6):
+    """Turn the bright pixels inside `ellipse` into a neon-red ramp."""
+    cx, cy, rx, ry = ellipse
+    mask = Image.new("L", img.size, 0)
+    ImageDraw.Draw(mask).ellipse([cx - rx, cy - ry, cx + rx, cy + ry], fill=255)
+    mask = mask.filter(ImageFilter.GaussianBlur(feather))  # soft edge, no seam
+
+    o, gp, mp = img.load(), grey.load(), mask.load()
+    w, h = img.size
+    for y in range(h):
+        for x in range(w):
+            m = mp[x, y] / 255.0
+            if m <= 0.003:
+                continue
+            t = gp[x, y] / 255.0
+            # red ramp: dark stays black, bright -> neon red
+            if t < 0.5:
+                k = t * 2
+                red = tuple(int(BG[i] + (RED_MID[i] - BG[i]) * k) for i in range(3))
             else:
-                # artwork: greyscale, preserving the 1-bit dither exactly
-                if L > 140:
-                    o[x, y] = ART_LIGHT
-                elif L > 70:
-                    o[x, y] = ART_MID
-                else:
-                    o[x, y] = BG_DARK
-
-    if do_skull and skull_box:
-        x0, y0, bw, bh = skull_box
-        for y in range(max(0, y0), min(h, y0 + bh)):
-            for x in range(max(0, x0), min(w, x0 + bw)):
-                p = o[x, y]
-                L = luma(p)
-                if L > 140:
-                    o[x, y] = SKULL_RED       # skull body -> neon red
-                elif L > 70:
-                    o[x, y] = SKULL_DK        # its dither -> deep red
-                # dark pixels (eyes/nose/teeth) stay black
-
-    return out
+                k = (t - 0.5) * 2
+                red = tuple(int(RED_MID[i] + (RED_HI[i] - RED_MID[i]) * k) for i in range(3))
+            cur = o[x, y]
+            o[x, y] = tuple(int(cur[i] + (red[i] - cur[i]) * m) for i in range(3))
+    return img
 
 
-def frame(img, size=(1920, 1080), scale=0.62):
-    """Centre the logo on a black canvas at the given size."""
-    canvas = Image.new("RGB", size, BG_DARK)
+def frame(img, size=(1920, 1080), scale=0.66):
+    canvas = Image.new("RGB", size, BG)
     tw = int(size[0] * scale)
     th = int(img.height * (tw / img.width))
-    if th > size[1] * 0.8:
-        th = int(size[1] * 0.8)
+    if th > size[1] * 0.82:
+        th = int(size[1] * 0.82)
         tw = int(img.width * (th / img.height))
-    r = img.resize((tw, th), Image.LANCZOS)
-    canvas.paste(r, ((size[0] - tw) // 2, (size[1] - th) // 2))
+    canvas.paste(img.resize((tw, th), Image.LANCZOS),
+                 ((size[0] - tw) // 2, (size[1] - th) // 2))
     return canvas
 
 
 def main():
-    args = [a for a in sys.argv[1:]]
-    if not args:
-        print(__doc__)
-        sys.exit(1)
-    src = args[0]
-    if not os.path.exists(src):
-        print(f"source image not found: {src}")
-        sys.exit(1)
+    ap = argparse.ArgumentParser()
+    ap.add_argument("src")
+    ap.add_argument("--out", required=True, help="basename written to public/")
+    ap.add_argument("--skull", help="cx,cy,rx,ry ellipse in source pixels")
+    ap.add_argument("--contrast", type=float, default=1.25)
+    ap.add_argument("--feather", type=int, default=6)
+    ap.add_argument("--bg", action="store_true", help="also write the 1920x1080 backgrounds")
+    ap.add_argument("--scale", type=float, default=0.66)
+    a = ap.parse_args()
 
-    skull_box = None
-    do_skull = "--no-skull" not in args
-    if "--skull" in args:
-        v = args[args.index("--skull") + 1]
-        skull_box = tuple(int(n) for n in v.split(","))
+    src = Image.open(a.src).convert("RGB")
+    print(f"source: {a.src}  {src.size[0]}x{src.size[1]}")
 
-    img = Image.open(src)
-    print(f"source: {src}  {img.size[0]}x{img.size[1]}")
+    img, grey = luma_map(src, a.contrast)
+    if a.skull:
+        e = tuple(int(v) for v in a.skull.split(","))
+        img = apply_skull(img, grey, e, a.feather)
+        print(f"skull ellipse: centre=({e[0]},{e[1]}) radii=({e[2]},{e[3]}) -> neon red")
 
-    out = recolor(src, skull_box, do_skull)
+    logo = os.path.join(ROOT, "public", f"{a.out}.png")
+    os.makedirs(os.path.dirname(logo), exist_ok=True)
+    img.save(logo)
+    print(f"wrote {logo}")
 
-    logo_p = os.path.join(ROOT, "public", "dedsec-logo.png")
-    out.save(logo_p)
-    print(f"wrote {logo_p}")
-
-    bg = frame(out)
-    for p in (
-        os.path.join(ROOT, "boot", "grub", "dedsec", "background.png"),
-        os.path.join(ROOT, "boot", "greeter", "sddm-dedsec", "background.png"),
-    ):
-        os.makedirs(os.path.dirname(p), exist_ok=True)
-        bg.save(p)
-        print(f"wrote {p}  1920x1080")
+    if a.bg:
+        bgim = frame(img, scale=a.scale)
+        for p in (os.path.join(ROOT, "boot", "grub", "dedsec", "background.png"),
+                  os.path.join(ROOT, "boot", "greeter", "sddm-dedsec", "background.png")):
+            os.makedirs(os.path.dirname(p), exist_ok=True)
+            bgim.save(p)
+            print(f"wrote {p}  1920x1080")
 
 
 if __name__ == "__main__":
