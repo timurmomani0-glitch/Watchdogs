@@ -10,7 +10,7 @@
 // actively misleading, and the registry must always be read live.
 const CACHE = 'ctos-shell-v2';
 const SHELL = ['/', '/index.html', '/ctos.css', '/ctos.js',
-  '/dedsec-logo.png', '/dedsec-skull.png', '/icon-192.png', '/favicon.ico', '/manifest.webmanifest'];
+  '/dedsec-logo.png', '/dedsec-skull.png', '/manifest.webmanifest'];
 
 self.addEventListener('install', (e) => {
   // Prime the offline fallback, then take over immediately.
@@ -43,6 +43,17 @@ self.addEventListener('fetch', (e) => {
         }
         return res;
       })
-      .catch(() => caches.match(e.request)) // offline: fall back to last known good
+      .catch(async () => {
+        // Server unreachable (stopped, or genuinely offline). Serve the cached
+        // shell so the operator sees the ctOS UI with a clear "cannot reach
+        // server" banner, rather than a raw browser error page.
+        const hit = await caches.match(e.request);
+        if (hit) return hit;
+        if (e.request.mode === 'navigate') {
+          const shell = await caches.match('/index.html') || await caches.match('/');
+          if (shell) return shell;
+        }
+        return Response.error();
+      })
   );
 });
