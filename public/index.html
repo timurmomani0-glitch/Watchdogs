@@ -93,87 +93,9 @@
 
   <!-- boot intro: hooded reaper + graffiti wordmark on a dithered field of skulls -->
   <div id="boot" class="boot">
-    <svg class="boot-bg" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect width="100%" height="100%" fill="url(#skulltile)"/></svg>
     <div class="boot-static" aria-hidden="true"></div>
     <div class="boot-inner">
-      <svg class="boot-emblem" viewBox="0 0 900 620">
-      <!-- ── hooded reaper, arms spread ─────────────────────────────────── -->
-      <g filter="url(#grit2)">
-        <!-- one silhouette: hood → shoulders → arms spread wide → ragged hem -->
-        <path class="fig-body" d="
-          M450 40
-          C382 40 338 92 344 168
-          C347 200 358 226 376 244
-          C300 258 216 292 166 348
-          C132 386 116 430 112 470
-          L150 452 L146 492 L182 466 L186 506 L222 476 L230 514
-          L266 484 L276 520 L312 490 L322 524 L358 496 L370 528
-          L406 500 L418 530 L450 504 L482 530 L494 500 L530 528
-          L542 496 L578 524 L588 490 L624 520 L634 484 L670 514
-          L678 476 L714 506 L718 466 L754 492 L750 452 L788 470
-          C784 430 768 386 734 348
-          C684 292 600 258 524 244
-          C542 226 553 200 556 168
-          C562 92 518 40 450 40 Z"/>
-        <!-- face cavity -->
-        <path class="fig-cav" d="M450 78 C398 78 372 118 378 166 C383 208 412 236 450 236 C488 236 517 208 522 166 C528 118 502 78 450 78 Z"/>
-      </g>
-
-      <!-- skull inside the hood -->
-      <g class="sk-glow">
-        <g filter="url(#grit2)">
-          <path class="sk-dome" d="M450 104 C418 104 396 128 396 160 c0 15 6 25 14 32 l0 12 c0 4 3 7 7 7 l66 0 c4 0 7-3 7-7 l0-12 c8-7 14-17 14-32 C504 128 482 104 450 104 Z"/>
-          <ellipse class="sk-hole" cx="428" cy="156" rx="13" ry="15"/>
-          <ellipse class="sk-hole" cx="472" cy="156" rx="13" ry="15"/>
-          <polygon class="sk-hole" points="450,164 440,186 460,186"/>
-          <g class="sk-hole">
-            <rect x="424" y="196" width="6" height="18"/><rect x="435" y="196" width="6" height="20"/>
-            <rect x="446" y="196" width="6" height="20"/><rect x="457" y="196" width="6" height="20"/>
-            <rect x="468" y="196" width="6" height="18"/>
-          </g>
-          <rect class="sk-drip" x="425" y="170" width="5" height="30"/>
-          <rect class="sk-drip" x="470" y="170" width="5" height="21"/>
-        </g>
-      </g>
-
-      <!-- ── chunky overlapping graffiti wordmark, across the figure ─────── -->
-      <g filter="url(#rough)" transform="translate(0,26) rotate(-3 450 430)">
-        <!-- D -->
-        <g transform="translate(28,352) rotate(-4) scale(1.16)">
-          <path class="wm" d="M8 6 L60 10 C92 16 106 46 104 78 C102 116 80 140 44 142 L4 140 Z
-                              M36 40 L52 43 C68 48 71 62 69 76 C67 92 58 100 42 100 L34 100 Z"/>
-        </g>
-        <!-- E -->
-        <g transform="translate(158,368) rotate(3) scale(1.16)">
-          <path class="wm" d="M10 8 L100 2 L98 32 L44 35 L44 56 L88 53 L86 79 L44 79 L44 104 L102 100 L100 132 L6 134 Z"/>
-        </g>
-        <!-- D -->
-        <g transform="translate(292,346) rotate(-2) scale(1.16)">
-          <path class="wm" d="M8 6 L60 10 C92 16 106 46 104 78 C102 116 80 140 44 142 L4 140 Z
-                              M36 40 L52 43 C68 48 71 62 69 76 C67 92 58 100 42 100 L34 100 Z"/>
-        </g>
-        <!-- S -->
-        <g transform="translate(424,366) rotate(4) scale(1.16)">
-          <path class="wm" d="M98 24 C80 6 30 2 16 26 C2 50 12 74 46 82 C72 88 82 94 77 106
-                              C72 118 44 118 20 104 L10 132 C40 148 92 146 104 118
-                              C117 88 99 68 62 58 C40 52 33 45 38 35 C43 25 72 28 92 42 Z"/>
-        </g>
-        <!-- E -->
-        <g transform="translate(556,350) rotate(-3) scale(1.16)">
-          <path class="wm" d="M10 8 L100 2 L98 32 L44 35 L44 56 L88 53 L86 79 L44 79 L44 104 L102 100 L100 132 L6 134 Z"/>
-        </g>
-        <!-- C -->
-        <g transform="translate(688,366) rotate(2) scale(1.16)">
-          <path class="wm" d="M100 30 C82 8 34 4 18 34 C2 64 10 108 42 128 C66 143 92 136 106 120
-                              L90 96 C80 106 60 111 48 98 C34 82 34 50 48 40 C60 31 76 34 86 46 Z"/>
-        </g>
-        <!-- paint drips off the letters -->
-        <rect class="wm-drip" x="96"  y="492" width="9" height="46"/>
-        <rect class="wm-drip" x="352" y="500" width="8" height="34"/>
-        <rect class="wm-drip" x="590" y="496" width="9" height="52"/>
-        <rect class="wm-drip" x="806" y="504" width="8" height="30"/>
-      </g>
-    </svg>
+      <img class="boot-emblem" src="dedsec-logo.png" alt="DEDSEC" />
       <div class="boot-lines">
         <div class="bl bl3" data-text="YOU ARE BEING WATCHED">YOU ARE BEING WATCHED</div>
         <div class="bl bl4">— now watch your own.</div>
@@ -189,7 +111,7 @@
 
   <header class="hud">
     <div class="brand">
-      <svg class="skull" viewBox="0 0 64 64" aria-hidden="true"><use href="#ds-skull"/></svg>
+      <img class="skull" src="dedsec-skull.png" alt="" aria-hidden="true" />
       <div class="brandtext">
         <span class="title" data-text="DEDSEC">DEDSEC</span>
         <span class="sub">ctOS // command your own domain</span>

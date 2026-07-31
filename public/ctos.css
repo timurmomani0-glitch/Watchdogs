@@ -119,7 +119,6 @@ body.glitching .grid { animation: gridtear 0.3s steps(3) 1; }
 .panel { background-image: repeating-linear-gradient(45deg, #ffffff09 0 1px, transparent 1px 5px); }
 
 /* boot: dithered field of skulls + hooded reaper + graffiti wordmark */
-.boot-bg { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0.6; }
 .boot-inner { gap: 4px; max-height: 100vh; padding: 12px 0; }
 @keyframes reaperjit { 0%, 92%, 100% { transform: translate(0, 0); } 93% { transform: translate(-2px, 1px); } 95% { transform: translate(2px, -1px); } 97% { transform: translate(-1px, 0); } }
 .rs-drip { fill: var(--skull-red); }                 /* red drip — on the skull */
@@ -139,7 +138,7 @@ body.glitching .grid { animation: gridtear 0.3s steps(3) 1; }
   background: linear-gradient(180deg, #0c1113, transparent);
 }
 .brand { display: flex; align-items: center; gap: 14px; }
-.skull { width: 44px; height: 44px; flex: 0 0 auto; animation: skulljit 5s infinite; }
+.skull { width: 46px; height: 46px; flex: 0 0 auto; object-fit: contain; image-rendering: pixelated; animation: skulljit 5s infinite; }
 /* neon red is confined to the skull */
 .s-cranium { fill: #b7bdbf; }
 .s-eye, .s-nose { fill: var(--bg); }
@@ -268,7 +267,7 @@ button.on { background: var(--grey-b); color: #06080a; border-color: var(--grey-
 .audit .allow { color: var(--grey-b); } .audit .deny { color: #06080a; background: var(--grey-b); padding: 0 4px; }
 
 /* ── DedSec emblem (boot hero): hooded figure + graffiti wordmark ────────── */
-.boot-emblem { width: min(84vw, 780px); max-height: 54vh; height: auto; animation: emblemjit 5s infinite; }
+.boot-emblem { width: min(86vw, 900px); max-height: 62vh; height: auto; display: block; image-rendering: pixelated; animation: emblemjit 5s infinite; }
 @keyframes emblemjit {
   0%, 92%, 100% { transform: translate(0, 0); }
   93% { transform: translate(-3px, 1px); } 95% { transform: translate(3px, -1px); } 97% { transform: translate(-1px, 0); }
