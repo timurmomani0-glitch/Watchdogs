@@ -120,25 +120,9 @@ body.glitching .grid { animation: gridtear 0.3s steps(3) 1; }
 
 /* boot: dithered field of skulls + hooded reaper + graffiti wordmark */
 .boot-bg { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0.6; }
-.boot-inner { gap: 6px; }
-.boot-reaper { width: 208px; height: auto; animation: reaperjit 5s infinite; }
+.boot-inner { gap: 4px; max-height: 100vh; padding: 12px 0; }
 @keyframes reaperjit { 0%, 92%, 100% { transform: translate(0, 0); } 93% { transform: translate(-2px, 1px); } 95% { transform: translate(2px, -1px); } 97% { transform: translate(-1px, 0); } }
-.r-robe, .r-hood { fill: url(#hatch); }
-.r-hood { opacity: 0.97; }
-.r-cav { fill: #06080a; }
-.rs-cranium { fill: #eef1f2; }
-.rs-eye, .rs-nose, .rs-teeth rect { fill: #06080a; }
 .rs-drip { fill: var(--skull-red); }                 /* red drip — on the skull */
-.r-drip { fill: #9aa0a2; }
-.r-splat { fill: #5c6264; opacity: 0.7; }
-.r-skull { filter: drop-shadow(0 0 8px var(--skull-red)) drop-shadow(1px 0 0 var(--skull-red2)); }
-.boot-word { width: 360px; height: auto; transform: rotate(-2deg); }
-.ds-word text {
-  font-family: var(--mono); font-size: 66px; font-weight: 900;
-  text-anchor: middle; fill: url(#hatch); stroke: #06080a; stroke-width: 2.6; paint-order: stroke;
-}
-.w-drip { fill: url(#hatch); }
-.w-splat { fill: #c2c8ca; opacity: 0.85; }
 
 #hud-controls { position: fixed; bottom: 10px; right: 12px; z-index: 120; display: flex; gap: 6px; }
 #hud-controls button {
@@ -282,3 +266,18 @@ button.on { background: var(--grey-b); color: #06080a; border-color: var(--grey-
 .feed .f, .audit .a { padding: 3px 0; border-bottom: 1px dashed var(--line); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .feed .t, .audit .t { color: var(--dim); margin-right: 8px; }
 .audit .allow { color: var(--grey-b); } .audit .deny { color: #06080a; background: var(--grey-b); padding: 0 4px; }
+
+/* ── DedSec emblem (boot hero): hooded figure + graffiti wordmark ────────── */
+.boot-emblem { width: min(84vw, 780px); max-height: 54vh; height: auto; animation: emblemjit 5s infinite; }
+@keyframes emblemjit {
+  0%, 92%, 100% { transform: translate(0, 0); }
+  93% { transform: translate(-3px, 1px); } 95% { transform: translate(3px, -1px); } 97% { transform: translate(-1px, 0); }
+}
+.fig-body { fill: url(#hatch); stroke: #05070a; stroke-width: 5; stroke-linejoin: round; }
+.fig-cav  { fill: #06080a; }
+.sk-dome  { fill: #eef1f2; stroke: #05070a; stroke-width: 2.5; }
+.sk-hole  { fill: #06080a; }
+.sk-glow  { filter: drop-shadow(0 0 14px var(--skull-red)) drop-shadow(0 0 4px var(--skull-red2)); }
+.sk-drip  { fill: var(--skull-red); }
+.wm       { fill: url(#hatch); stroke: #05070a; stroke-width: 8; stroke-linejoin: round; }
+.wm-drip  { fill: url(#hatch); stroke: #05070a; stroke-width: 3; }
