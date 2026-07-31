@@ -401,9 +401,21 @@ loadWatch(); loadHistory(); loadTelemetry();
 setInterval(loadTelemetry, 5000);
 setInterval(() => { loadWatch(); loadHistory(); }, 20000);
 
-// PWA — installable on your phone
+// PWA — installable on your phone.
+// Self-healing update path: when a new worker takes control (i.e. you pulled and
+// restarted), reload once so the fresh JS/CSS is actually used. Without this a
+// stale shell can persist across updates, which is exactly the bug that shipped
+// in v1 of this worker.
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').catch(() => {});
+  let reloading = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (reloading) return;
+    reloading = true;
+    location.reload();
+  });
+  navigator.serviceWorker.register('sw.js')
+    .then((reg) => { reg.update?.(); })
+    .catch(() => {});
 }
 requestAnimationFrame(stepMap);
 setInterval(loadFinance, 15000);
