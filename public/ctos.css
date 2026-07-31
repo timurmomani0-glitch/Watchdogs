@@ -325,3 +325,20 @@ body::after {
 .hist .a { padding: 3px 0; border-bottom: 1px dashed var(--line);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .hist .t { color: var(--dim); margin-right: 8px; }
+
+/* ── Motion: the HUD must be usable, not seizure-inducing ────────────────── */
+/* Glitch/CRT motion only runs when FX is explicitly enabled (⚡ FX button). */
+body.no-fx .crt { animation: none; }
+body.no-fx .noise { animation: none; opacity: 0.035; }
+body.no-fx .title::before,
+body.no-fx .title::after { animation: none; opacity: 0; }
+body.no-fx .skull { animation: none; }
+body.no-fx .tear { display: none; }
+body.no-fx.glitching .grid { animation: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .crt, .noise, .skull, .title::before, .title::after,
+  .boot-emblem, .bl2, .bl3 { animation: none !important; }
+  .tear { display: none !important; }
+  .grid { animation: none !important; }
+}

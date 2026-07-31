@@ -52,7 +52,9 @@ export function verifyChain() {
   const lines = fs.readFileSync(LOG, 'utf8').trim().split('\n').filter(Boolean);
   let prev = 'GENESIS';
   for (let i = 0; i < lines.length; i++) {
-    const row = JSON.parse(lines[i]);
+    let row;
+    try { row = JSON.parse(lines[i]); }
+    catch { return { ok: false, checked: i, brokenAt: i, reason: 'unparseable entry' }; }
     const { hash, ...body } = row;
     if (body.prev !== prev) return { ok: false, checked: i, brokenAt: i };
     // Recompute exactly as record() did: hash over prev + JSON(row-without-hash).
@@ -66,5 +68,7 @@ export function verifyChain() {
 export function tail(n = 50) {
   if (!fs.existsSync(LOG)) return [];
   const lines = fs.readFileSync(LOG, 'utf8').trim().split('\n').filter(Boolean);
-  return lines.slice(-n).map((l) => JSON.parse(l));
+  // A truncated final line (server killed mid-append) must not take out the
+  // whole endpoint — skip unparseable rows rather than throwing.
+  return lines.slice(-n).map((l) => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
 }

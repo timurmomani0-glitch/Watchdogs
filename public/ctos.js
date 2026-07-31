@@ -23,7 +23,18 @@ function send(cmd) {
 
 // ── System header ────────────────────────────────────────────────────────────
 async function loadSystem() {
-  const s = await (await fetch('/api/system')).json();
+  let s;
+  try {
+    const r = await fetch('/api/system');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    s = await r.json();
+  } catch (e) {
+    $('#sysline').textContent =
+      `CANNOT REACH SERVER (${e.message})\nis it running?  npm start   ·  then reload`;
+    $('#sysline').style.color = 'var(--skull-red)';
+    return;
+  }
+  $('#sysline').style.color = '';
   $('#sysline').textContent =
     `owner ${s.owner}   ·   stage ${s.stage}\njur ${s.jurisdiction.country}/${s.jurisdiction.regulator}   TX:${s.jurisdiction.rf_tx ? 'on' : 'off'}  NFC-emu:${s.jurisdiction.rfid_emulation ? 'on' : 'off'}  AMBER:${s.jurisdiction.amber_enabled ? 'on' : 'off'}`;
   if (s.demo) $('#demoBanner').hidden = false;
@@ -305,15 +316,31 @@ document.addEventListener('click', (e) => {
 document.addEventListener('keydown', () => blip(520, 0.02, 'square', 0.014));
 
 // ── Glitch: monochrome RGB-tear sweep (red stays on the skull) ───────────────
+// OFF by default — a dashboard you actually use should not shake at you.
+// Enable with the ⚡ FX button; honoured only if the OS isn't asking for
+// reduced motion.
+const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+let fxOn = localStorage.getItem('ctosFx') === '1' && !reduceMotion;
+function setFx(on) {
+  fxOn = on && !reduceMotion;
+  localStorage.setItem('ctosFx', on ? '1' : '0');
+  document.body.classList.toggle('no-fx', !fxOn);
+  const b = $('#fxToggle');
+  if (b) { b.classList.toggle('muted', !fxOn); b.textContent = fxOn ? '⚡ FX' : '⚡ FX off'; }
+}
+$('#fxToggle')?.addEventListener('click', () => setFx(!fxOn));
+setFx(fxOn);
+
 function fireTear() {
+  if (!fxOn) return;
   const t = $('#tear'); if (t) { t.classList.remove('fire'); void t.offsetWidth; t.classList.add('fire'); }
   document.body.classList.add('glitching');
   setTimeout(() => document.body.classList.remove('glitching'), 320);
   noiseBurst(0.09, 0.022, 1700);
 }
 function scheduleTear() {
-  const delay = 9000 + Math.random() * 9000;
-  setTimeout(() => { if (!$('#boot').offsetParent) fireTear(); scheduleTear(); }, delay);
+  const delay = 12000 + Math.random() * 12000;
+  setTimeout(() => { if (fxOn && !$('#boot').offsetParent) fireTear(); scheduleTear(); }, delay);
 }
 scheduleTear();
 
