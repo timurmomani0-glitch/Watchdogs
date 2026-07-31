@@ -1,0 +1,42 @@
+{
+  "$schema": "https://aka.ms/terminal-profiles-schema",
+  "schemes": [
+    {
+      "name": "ctOS",
+      "background": "#050809",
+      "foreground": "#cfeef2",
+      "cursorColor": "#00e5ff",
+      "selectionBackground": "#0a8ea3",
+      "black": "#0a1013",
+      "red": "#ff3b30",
+      "green": "#22ffa7",
+      "yellow": "#ffb020",
+      "blue": "#00a5c4",
+      "purple": "#0a8ea3",
+      "cyan": "#00e5ff",
+      "white": "#cfeef2",
+      "brightBlack": "#5c7d84",
+      "brightRed": "#ff6b60",
+      "brightGreen": "#5cffbf",
+      "brightYellow": "#ffca5c",
+      "brightBlue": "#39c6e6",
+      "brightPurple": "#39b6c9",
+      "brightCyan": "#6ff2ff",
+      "brightWhite": "#eafcff"
+    }
+  ],
+  "profiles": [
+    {
+      "name": "ctOS",
+      "commandline": "powershell.exe -NoExit -ExecutionPolicy Bypass -File \"%USERPROFILE%\\Watchdogs\\windows\\ctos.ps1\"",
+      "startingDirectory": "%USERPROFILE%\\Watchdogs",
+      "colorScheme": "ctOS",
+      "opacity": 88,
+      "useAcrylic": true,
+      "font": { "face": "Cascadia Mono", "size": 11 },
+      "cursorShape": "filledBox",
+      "padding": "12",
+      "icon": "🛰"
+    }
+  ]
+}

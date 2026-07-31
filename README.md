@@ -45,6 +45,19 @@ In the **Scope Gate** panel, press *"scan neighbour ✗"* or *"emulate stranger 
 back **DENIED** in red with a reason, and the denial is written to the hash-chained audit log. That
 is the whole thesis, running.
 
+### Prefer the terminal?
+
+```bash
+npm start        # dashboard server
+npm run tui      # the whole HUD inside your terminal — no browser
+```
+
+`npm run tui` is a full-screen ANSI HUD (device grid, live scope gate, spectrum waterfall, audit log,
+finance). On **Windows**, open the themed **ctOS** Windows Terminal profile and it starts the server
+for you — see [`windows/README.md`](windows/README.md). Terminal HUD details:
+[`tui/README.md`](tui/README.md). Turn the browser app into a full Linux desktop shell:
+[`rice/README.md`](rice/README.md).
+
 ---
 
 ## Going live (Stage A → B)

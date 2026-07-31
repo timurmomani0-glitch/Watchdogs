@@ -36,17 +36,33 @@ function mockDiscover(cidr = '192.168.1.0/24') {
   return hosts;
 }
 
+function parseArpScan(stdout) {
+  // Linux `arp-scan --localnet`: "192.168.1.10  aa:bb:cc:dd:ee:ff  Vendor"
+  return stdout.split('\n')
+    .map((l) => l.match(/^(\d+\.\d+\.\d+\.\d+)\s+([0-9a-f:]{17})\s+(.*)$/i))
+    .filter(Boolean)
+    .map((m) => ({ ip: m[1], mac: m[2].toLowerCase(), vendor: m[3].trim(), kind: 'host', online: true }));
+}
+
+function parseWindowsArp(stdout) {
+  // Windows `arp -a`: "  192.168.1.10          aa-bb-cc-dd-ee-ff     dynamic"
+  return stdout.split('\n')
+    .map((l) => l.match(/^\s*(\d+\.\d+\.\d+\.\d+)\s+([0-9a-f]{2}(?:-[0-9a-f]{2}){5})\s+(\w+)/i))
+    .filter(Boolean)
+    .map((m) => ({ ip: m[1], mac: m[2].replace(/-/g, ':').toLowerCase(), vendor: m[3], kind: 'host', online: true }));
+}
+
 function liveDiscover(cidr) {
+  // Cross-platform: Linux/mac use arp-scan (active), Windows reads the ARP cache
+  // via `arp -a`. Either way the scope gate has already authorized the CIDR.
   return new Promise((resolve) => {
-    // arp-scan is fast + reliable on a LAN; requires CAP_NET_RAW or sudo.
-    execFile('arp-scan', ['--localnet', '--quiet'], { timeout: 15000 }, (err, stdout) => {
+    const win = process.platform === 'win32';
+    const cmd = win ? 'arp' : 'arp-scan';
+    const args = win ? ['-a'] : ['--localnet', '--quiet'];
+    execFile(cmd, args, { timeout: 15000, windowsHide: true }, (err, stdout) => {
       if (err) return resolve(mockDiscover(cidr)); // graceful fallback
-      const hosts = stdout
-        .split('\n')
-        .map((l) => l.match(/^(\d+\.\d+\.\d+\.\d+)\s+([0-9a-f:]{17})\s+(.*)$/i))
-        .filter(Boolean)
-        .map((m) => ({ ip: m[1], mac: m[2], vendor: m[3].trim(), kind: 'host', online: true }));
-      resolve(hosts);
+      const hosts = win ? parseWindowsArp(stdout) : parseArpScan(stdout);
+      resolve(hosts.length ? hosts : mockDiscover(cidr));
     });
   });
 }
