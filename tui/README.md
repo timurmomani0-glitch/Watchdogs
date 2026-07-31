@@ -29,7 +29,7 @@ Or on Windows, just open the **ctOS** Windows Terminal profile — see
 | `2` | toggle owned lamp → ALLOWED |
 | `3` | TX in-band → DENIED (transmit off by default) |
 | `4` | scan neighbour → DENIED (out of scope) |
-| `5` | emulate stranger card → DENIED (not your card) |
+| `5` | emulate stranger card → DENIED (emulation off by default) |
 | `r` | refresh REST data |
 | `q` / `Ctrl-C` | quit |
 

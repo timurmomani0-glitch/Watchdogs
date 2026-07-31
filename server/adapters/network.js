@@ -44,12 +44,24 @@ function parseArpScan(stdout) {
     .map((m) => ({ ip: m[1], mac: m[2].toLowerCase(), vendor: m[3].trim(), kind: 'host', online: true }));
 }
 
+function isBogusArp(ip, mac) {
+  if (mac === 'ff:ff:ff:ff:ff:ff' || mac === '00:00:00:00:00:00') return true; // broadcast / invalid
+  if (mac.startsWith('01:00:5e') || mac.startsWith('33:33')) return true;       // IPv4 / IPv6 multicast
+  const o = ip.split('.').map(Number);
+  return o[0] >= 224 || ip.endsWith('.255') || ip === '255.255.255.255';        // multicast / broadcast IPs
+}
+
 function parseWindowsArp(stdout) {
-  // Windows `arp -a`: "  192.168.1.10          aa-bb-cc-dd-ee-ff     dynamic"
+  // Windows `arp -a`: "  192.168.1.10   aa-bb-cc-dd-ee-ff   dynamic". Match on
+  // IP + MAC ONLY — the trailing Type column ("dynamic"/"static") is localized
+  // (e.g. Russian/CJK) and must not be part of the match. `arp -a` is IPv4-only
+  // (ARP has no IPv6); IPv6 neighbours are not discovered on this path. The ARP
+  // cache also holds multicast/broadcast entries, which isBogusArp drops.
   return stdout.split('\n')
-    .map((l) => l.match(/^\s*(\d+\.\d+\.\d+\.\d+)\s+([0-9a-f]{2}(?:-[0-9a-f]{2}){5})\s+(\w+)/i))
+    .map((l) => l.match(/^\s*(\d+\.\d+\.\d+\.\d+)\s+([0-9a-f]{2}(?:-[0-9a-f]{2}){5})/i))
     .filter(Boolean)
-    .map((m) => ({ ip: m[1], mac: m[2].replace(/-/g, ':').toLowerCase(), vendor: m[3], kind: 'host', online: true }));
+    .map((m) => ({ ip: m[1], mac: m[2].replace(/-/g, ':').toLowerCase(), vendor: '', kind: 'host', online: true }))
+    .filter((h) => !isBogusArp(h.ip, h.mac));
 }
 
 function liveDiscover(cidr) {

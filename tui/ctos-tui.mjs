@@ -157,6 +157,7 @@ function render() {
   const shown = S.waterfall.slice(-wfInnerH);
   for (let r = 0; r < shown.length; r++) {
     const rowData = shown[shown.length - 1 - r];
+    if (!Array.isArray(rowData) || !rowData.length) continue;
     let s = '';
     for (let x = 0; x < wfInnerW; x++) {
       const bin = Math.floor((x / wfInnerW) * rowData.length);
@@ -185,6 +186,8 @@ function render() {
 // ── Lifecycle ────────────────────────────────────────────────────────────────
 function enter() { process.stdout.write(`${E}?1049h${E}?25l${E}2J`); }
 function leave() { process.stdout.write(`${E}?25h${E}?1049l`); }
+let _left = false;
+function safeLeave() { if (_left) return; _left = true; try { leave(); } catch {} }
 
 async function main() {
   await refresh();
@@ -199,7 +202,11 @@ async function main() {
   render();
   const timer = setInterval(render, 500);
 
-  const quit = () => { clearInterval(timer); leave(); process.exit(0); };
+  const quit = () => { clearInterval(timer); safeLeave(); process.exit(0); };
+  process.on('exit', safeLeave);
+  process.on('SIGTERM', quit);
+  process.on('uncaughtException', (e) => { safeLeave(); console.error(e); process.exit(1); });
+  process.on('unhandledRejection', (e) => { safeLeave(); console.error(e); process.exit(1); });
   process.on('SIGINT', quit);
   process.stdout.on('resize', () => { S.cols = process.stdout.columns; S.rows = process.stdout.rows; process.stdout.write(`${E}2J`); render(); });
 
