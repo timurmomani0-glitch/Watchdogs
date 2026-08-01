@@ -41,6 +41,12 @@ export function buildVocab(config) {
   const txBand = (reg.rf?.tx_bands || [])[0]?.center_hz || null;
   const rfid = (reg.rfid || [])[0]?.uid || null;
 
+  // The global AMBER kill-switch dominates the per-capability flags, exactly as
+  // the scope gate treats it: if amber_enabled is false, NO amber target is
+  // offered even if tx_allowed / rfid_emulation_allowed are (stale-)true. Without
+  // this the assistant would offer to key up a radio the gate then refuses.
+  const amberOn = jur.amber_enabled !== false;
+
   return {
     cidr: reg.networks?.[0]?.cidr || null,
     ha,
@@ -48,10 +54,10 @@ export function buildVocab(config) {
     cameras,
     accounts,
     // AMBER targets are surfaced only when the jurisdiction profile enables the
-    // capability — so the assistant never offers to key up a radio or emulate a
-    // card that the profile forbids, even though the gate would refuse it anyway.
-    tx: (jur.rf?.tx_allowed && txBand) ? { target: 'rf:' + txBand, hz: txBand } : null,
-    rfid: (jur.rfid_emulation_allowed && rfid) ? { target: 'nfc:' + rfid, uid: rfid } : null,
-    amber_enabled: jur.amber_enabled !== false,
+    // capability AND the global kill-switch is on — so the assistant never offers
+    // an action the gate would refuse.
+    tx: (amberOn && jur.rf?.tx_allowed && txBand) ? { target: 'rf:' + txBand, hz: txBand } : null,
+    rfid: (amberOn && jur.rfid_emulation_allowed && rfid) ? { target: 'nfc:' + rfid, uid: rfid } : null,
+    amber_enabled: amberOn,
   };
 }

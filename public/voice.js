@@ -175,11 +175,16 @@ const DedSec = (() => {
 
     // A pending confirmation short-circuits everything.
     if (pending) {
-      if (/\b(confirm|do it|yes|affirmative|execute|go)\b/i.test(said)) {
+      // Deliberately NARROW. A staged command can unlock a door, key up a radio,
+      // or wipe history, so the confirmation must be an unambiguous, uncommon
+      // word — not "yes"/"go"/"ok", which show up in ordinary speech and would
+      // let ambient conversation fire a mutating action. Only "confirm" (or the
+      // explicit "do it"/"execute") counts.
+      if (/\b(confirm(ed)?|do it|execute it?)\b/i.test(said)) {
         const p = pending; pending = null; setIndicator();
         speak('Confirmed.');
         if (p.run) p.run(); else dispatch(p.cmd);
-      } else if (/\b(cancel|no|stop|abort|negative|never mind)\b/i.test(said)) {
+      } else if (/\b(cancel|no|stop|abort|negative|never mind|nevermind)\b/i.test(said)) {
         pending = null; setIndicator(); speak('Cancelled.');
       } else {
         speak('Say confirm, or cancel.');
@@ -319,7 +324,10 @@ const DedSec = (() => {
   function toggle() { listening ? stop() : start(); }
   function setVoiceMuted(m) {
     voiceMuted = m; localStorage.setItem('ctosVoiceMuted', m ? '1' : '0');
-    if (m) synth.cancel();
+    // Guard synth: setVoiceMuted runs during init() to restore the saved state,
+    // even on a browser with no speechSynthesis. An unguarded synth.cancel()
+    // would throw there and abort the rest of DedSec's initialisation.
+    if (m && synth) synth.cancel();
     const b = document.querySelector('#voiceMute');
     if (b) { b.classList.toggle('muted', m); b.textContent = m ? '🔇 VOICE' : '🔊 VOICE'; }
   }

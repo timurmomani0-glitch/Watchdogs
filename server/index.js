@@ -7,7 +7,7 @@ import path from 'node:path';
 import url from 'node:url';
 import { loadConfig } from './config.js';
 import { dispatch } from './command-bus.js';
-import { tail, verifyChain } from './audit.js';
+import { tail, verifyChain, record } from './audit.js';
 import * as network from './adapters/network.js';
 import * as ha from './adapters/homeassistant.js';
 import * as sdr from './adapters/sdr.js';
@@ -95,7 +95,14 @@ app.get('/api/watch', (req, res) => res.json({
   ...watch.status(), notify: { configured: notifyConfigured(), providers: notifyProviders() },
 }));
 app.post('/api/watch/sweep', async (req, res) => res.json(await watch.sweep(config, broadcast)));
-app.post('/api/history/purge', (req, res) => res.json(store.purge()));
+app.post('/api/history/purge', (req, res) => {
+  // Wiping the sighting history is destructive; record it in the hash-chained
+  // audit before it happens, so the deletion itself leaves a tamper-evident
+  // trace no matter who triggered it (a button, a voice command, or curl).
+  record({ actor: config.registry.owner || 'operator', verb: 'purge', class: 'history',
+    target: 'sightings', result: 'allow', reason: 'operator purged local sighting history' });
+  res.json(store.purge());
+});
 
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server, path: '/ws' });

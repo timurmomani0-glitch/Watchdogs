@@ -159,6 +159,23 @@ check('vocab cidr equals the registry cidr', vocab.cidr, config.registry.network
 // AMBER targets are hidden unless the profile enables them (default: off).
 check('TX not offered while profile TX is off', vocab.tx, null);
 check('card emulation not offered while off', vocab.rfid, null);
+// The global amber_enabled kill-switch dominates: even with tx_allowed /
+// rfid_emulation_allowed both true, a globally-disabled AMBER offers nothing —
+// the vocab must never advertise a capability the gate would then deny.
+const vocabAmberKilled = buildVocab({
+  registry: config.registry,
+  jurisdiction: { ...config.jurisdiction, amber_enabled: false,
+    rf: { ...config.jurisdiction.rf, tx_allowed: true }, rfid_emulation_allowed: true },
+});
+check('kill-switch hides TX even if tx_allowed', vocabAmberKilled.tx, null);
+check('kill-switch hides card emulation', vocabAmberKilled.rfid, null);
+// ...and with AMBER enabled + capability flags on, the target IS offered.
+const vocabAmberOn = buildVocab({
+  registry: config.registry,
+  jurisdiction: { ...config.jurisdiction, amber_enabled: true,
+    rf: { ...config.jurisdiction.rf, tx_allowed: true }, rfid_emulation_allowed: true },
+});
+check('TX offered when amber on + tx_allowed', !!vocabAmberOn.tx, true);
 // A spoken command routes through the SAME gate. Prove a voice-shaped command
 // for an owned HA device is allowed, and for an unowned one is denied.
 if (vocab.ha[0]) {
