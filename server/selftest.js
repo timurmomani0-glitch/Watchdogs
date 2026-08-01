@@ -7,7 +7,7 @@
 import { authorize } from './scope-gate.js';
 import { loadConfig } from './config.js';
 import { record, verifyChain } from './audit.js';
-import { inCidr, parseWindowsArp, parseArpScan } from './adapters/network.js';
+import { inCidr, parseCidr, intToIp, localAddressIn, parseWindowsArp, parseArpScan } from './adapters/network.js';
 
 // Always test against the committed example fixtures, so this proof stays
 // stable regardless of the operator's private registry (npm run setup).
@@ -79,6 +79,19 @@ function check(name, got, want) {
   console.log(`${ok ? 'PASS' : 'FAIL'}  ${name.padEnd(48)} ${got}`);
   ok ? pass++ : fail++;
 }
+// FAIL CLOSED. A missing or malformed CIDR must match NOTHING. The state where
+// no network is registered is exactly the state where the gate denies every
+// command — it must not be the state where the adapter returns the whole LAN.
+check('undefined cidr matches nothing', inCidr('172.20.10.1', undefined), false);
+check('null cidr matches nothing', inCidr('172.20.10.1', null), false);
+check('empty cidr matches nothing', inCidr('172.20.10.1', ''), false);
+check('empty prefix "1.0/" matches nothing', inCidr('8.8.8.8', '192.168.1.0/'), false);
+check('/33 does not widen to /1', inCidr('200.1.1.1', '192.168.1.0/33'), false);
+check('/99 rejected', inCidr('10.0.0.1', '10.0.0.0/99'), false);
+check('bare IP (no prefix) rejected', inCidr('10.0.0.1', '10.0.0.0'), false);
+check('non-numeric prefix rejected', inCidr('10.0.0.1', '10.0.0.0/abc'), false);
+check('octal-ish octet rejected', inCidr('010.0.0.1', '10.0.0.0/8'), false);
+
 check('in-range host kept', inCidr('192.168.1.10', '192.168.1.0/24'), true);
 check('hotspot gateway rejected', inCidr('172.20.10.1', '192.168.1.0/24'), false);
 check('neighbour /24 rejected', inCidr('192.168.2.10', '192.168.1.0/24'), false);
@@ -112,6 +125,22 @@ const lnxArp = [
 ].join('\n');
 check('arp-scan: confined to owned /24',
   parseArpScan(lnxArp).filter((h) => inCidr(h.ip, '192.168.1.0/24')).length, 2);
+
+// The sweep itself must stay in range. Filtering results cannot un-send a
+// packet, so a CIDR written as the operator's own address ("192.168.1.5/24" —
+// how ipconfig prints it) must not walk the ping sweep into the next subnet.
+console.log('── sweep range (probes must stay in the owned range) ───────');
+const r5 = parseCidr('192.168.1.5/24');
+check('base masked to network address', intToIp(r5.base), '192.168.1.0');
+check('last address is the broadcast', intToIp(r5.last), '192.168.1.255');
+check('/33 is not a range at all', parseCidr('192.168.1.0/33'), null);
+check('empty prefix is not a range', parseCidr('192.168.1.0/'), null);
+check('/32 base equals last', parseCidr('10.0.0.7/32').base, parseCidr('10.0.0.7/32').last);
+const r24 = parseCidr('192.168.1.0/24');
+check('sweep never reaches broadcast', (r24.base + 254) >>> 0 < r24.last, true);
+// localAddressIn() gates the sweep on actually being attached to the network.
+check('not attached to an unrelated /24', localAddressIn('203.0.113.0/24'), null);
+check('no valid cidr → never attached', localAddressIn(undefined), null);
 
 console.log('── audit chain ─────────────────────────────────────────────');
 record({ actor: 'selftest', verb: 'scan', class: 'network', target: '192.168.1.0/24', result: 'allow' });

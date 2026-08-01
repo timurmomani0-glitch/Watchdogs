@@ -31,9 +31,17 @@ export async function sweep(config, broadcast) {
   const cidr = config.registry.networks?.[0]?.cidr;
   if (!cidr) return { ran: false, reason: 'no owned network registered' };
 
-  const hosts = (await network.discover(cidr)).map((h) => ({
-    ...h, vendor: h.vendor || vendorOf(h.mac) || null,
-  }));
+  const found = await network.discover(cidr);
+  const scan = network.status();
+  // A scan that FAILED returns the same empty array as a quiet network. Folding
+  // that into the store would mark every device as having left and flip
+  // presence to "nobody home" because arp-scan timed out once.
+  if (!scan.ok) {
+    lastResult = { ran: false, at: new Date().toISOString(), cidr, error: scan.reason };
+    return lastResult;
+  }
+
+  const hosts = found.map((h) => ({ ...h, vendor: h.vendor || vendorOf(h.mac) || null }));
 
   const reg = registeredMacs(config.registry);
   const { joined, left, unregistered } = store.observe(hosts, reg);
@@ -55,7 +63,7 @@ export async function sweep(config, broadcast) {
   for (const d of left) broadcast?.({ stream: 'alert', payload: { kind: 'leave', ...d } });
 
   lastResult = {
-    ran: true, at: new Date().toISOString(), cidr,
+    ran: true, at: new Date().toISOString(), cidr, error: null,
     seen: hosts.length, joined: joined.length, left: left.length,
     unregistered: unregistered.length,
   };

@@ -82,6 +82,14 @@ let mapNodes = [];
 async function loadDevices() {
   const d = await (await fetch('/api/devices')).json();
   const grid = $('#devices'); grid.innerHTML = '';
+  // An empty grid has three very different causes. Say which one it is instead
+  // of showing a confidently blank network.
+  if (!d.hosts.length && d.scan && !d.scan.ok) {
+    grid.appendChild(el('div', 'line deny', `SCAN UNAVAILABLE · ${d.scan.reason || 'unknown error'}`));
+  } else if (!d.hosts.length) {
+    grid.appendChild(el('div', 'line muted',
+      d.cidr ? `no devices seen on ${d.cidr}` : 'no owned network registered — run: npm run setup'));
+  }
   d.hosts.forEach((h) => {
     const c = el('div', 'dev');
     c.innerHTML = `<div><span class="dot ${h.online ? 'on' : 'off'}"></span><span class="ip">${h.ip}</span></div>
