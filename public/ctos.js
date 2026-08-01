@@ -20,6 +20,9 @@ function send(cmd) {
   if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(cmd));
   return cmd.id;
 }
+// The voice layer routes spoken commands through this exact function, so it can
+// never do anything a button can't. Exposed on window for voice.js.
+window.send = send;
 
 // ── System header ────────────────────────────────────────────────────────────
 async function loadSystem() {
@@ -170,6 +173,7 @@ function showResult(r) {
   if (r.denied) { noiseBurst(0.18, 0.05, 620); fireTear(); }
   else if (r.amber) blip(420, 0.06);
   else blip(760, 0.05);
+  window.DedSec?.onResult?.(r);      // let the presence narrate the outcome
   loadAudit();
 }
 document.addEventListener('click', (e) => {
@@ -308,6 +312,7 @@ function pushAlert(a) {
   out.prepend(el2);
   while (out.children.length > 10) out.lastChild.remove();
   if (a.kind === 'unregistered') { fireTear(); noiseBurst(0.2, 0.05, 520); }
+  window.DedSec?.onAlert?.(a);       // DedSec speaks the alert aloud
   loadHistory();
 }
 const C_mac = (m) => m ? `<span class="muted">${m}</span>` : '';

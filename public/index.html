@@ -115,6 +115,8 @@
   </div>
 
   <div id="hud-controls">
+    <button id="micToggle" title="voice control — say &quot;DedSec&quot; to wake">◌ MIC</button>
+    <button id="voiceMute" title="mute DedSec's voice">🔊 VOICE</button>
     <button id="sndToggle" title="sound">♪ SND</button>
     <button id="fxToggle" title="glitch effects">⚡ FX</button>
     <button id="replayIntro" title="replay intro">↻ INTRO</button>
@@ -216,8 +218,19 @@
       <h2>▤ Audit Log <span class="tag" id="chainTag">chain</span></h2>
       <div id="audit" class="audit"></div>
     </section>
+
+    <section class="panel" id="panel-voice">
+      <h2>◈ DedSec <span class="tag green">voice</span><span class="tag" id="voiceTag">say "DedSec"</span></h2>
+      <div class="small muted" style="margin-bottom:8px">
+        Spoken commands run through the scope gate — same as the buttons. Try:
+        <em>"DedSec, scan my network"</em> · <em>"status"</em> · <em>"who's home"</em>.
+        Actions that change something ask you to say <em>confirm</em> first.
+      </div>
+      <div id="voiceLog" class="voice-log"></div>
+    </section>
   </main>
 
   <script src="ctos.js"></script>
+  <script src="voice.js"></script>
 </body>
 </html>

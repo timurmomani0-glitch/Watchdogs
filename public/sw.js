@@ -8,8 +8,8 @@
 //
 // API responses are never cached at all: stale device/scope data would be
 // actively misleading, and the registry must always be read live.
-const CACHE = 'ctos-shell-v2';
-const SHELL = ['/', '/index.html', '/ctos.css', '/ctos.js',
+const CACHE = 'ctos-shell-v3';
+const SHELL = ['/', '/index.html', '/ctos.css', '/ctos.js', '/voice.js',
   '/dedsec-logo.png', '/dedsec-skull.png', '/manifest.webmanifest'];
 
 self.addEventListener('install', (e) => {

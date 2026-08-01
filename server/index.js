@@ -16,6 +16,7 @@ import * as hosts from './adapters/hosts.js';
 import * as telemetry from './adapters/telemetry.js';
 import * as store from './store.js';
 import * as watch from './watch.js';
+import { buildVocab } from './voice.js';
 import { vendorOf } from './oui.js';
 import { configured as notifyConfigured, providers as notifyProviders } from './notify.js';
 
@@ -77,6 +78,12 @@ app.get('/api/audit', (req, res) => res.json({ chain: verifyChain(), entries: ta
 app.get('/api/capabilities', (req, res) => {
   res.json(capabilityLegend());
 });
+
+// Voice vocabulary — the speakable targets, resolved from the registry only.
+// Read-only and capability-free: it names what you own so the browser grammar
+// can map a spoken label to a target. Every resolved target still goes through
+// the command bus and the scope gate; this endpoint grants nothing.
+app.get('/api/voice/vocab', (req, res) => res.json(buildVocab(config)));
 
 // ── defensive ctOS / history / presence / telemetry ────────────────────────
 app.get('/api/telemetry', async (req, res) => res.json(await telemetry.snapshot()));
