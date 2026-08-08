@@ -33,7 +33,7 @@ code and cannot be enabled. See [`DELIVERABLE.md` §2](DELIVERABLE.md).
 
 ```bash
 npm install
-npm run check      # 57-check proof: in-scope ALLOW, AMBER-off DENY, out-of-scope DENY, ERP cap, results confinement, sweep range, audit chain
+npm run check      # 65-check proof: in-scope ALLOW, AMBER-off DENY, out-of-scope DENY, ERP cap, results confinement, sweep range, voice⊆registry, audit chain
 npm start          # http://localhost:7050  → the ctOS dashboard on mock data
 ```
 
@@ -44,6 +44,23 @@ Open <http://localhost:7050>. You get the full HUD: force-directed **Network Map
 In the **Scope Gate** panel, press *"scan neighbour ✗"* or *"emulate stranger card ✗"* — they come
 back **DENIED** in red with a reason, and the denial is written to the hash-chained audit log. That
 is the whole thesis, running.
+
+### Talk to it (DedSec voice)
+
+Press **◌ MIC** (Chrome/Edge, on `localhost` or HTTPS), say **"DedSec"** to wake it, then a command:
+
+```
+"DedSec, scan my network"        "status" / "sitrep"        "who's home?"
+"turn the living room lights on" "wake my nas"              "verify the audit"
+```
+
+Voice is an **input, not a new power**. Every spoken command is turned into the same
+`{verb, class, target}` the buttons send and passes through the same scope gate — say *"scan the
+neighbour's wifi"* and DedSec refuses out loud, because the gate denies it. Anything that changes
+state (a switch, a wake, a transmit, a history purge) is repeated back and waits for you to say
+**"confirm"** first. DedSec also narrates on its own: when the watcher spots an unregistered device,
+it says so. `npm run check` proves the voice vocabulary is a strict subset of your registry — it can
+only ever *name* things you own.
 
 ### Prefer the terminal?
 
@@ -97,7 +114,7 @@ Check what's in scope at any time:
 
 ```bash
 npm run scope      # what YOUR registry allows/denies right now
-npm run check      # gate-logic proof against fixed fixtures (always 57/57)
+npm run check      # gate-logic proof against fixed fixtures (always 65/65)
 ```
 
 > `setup` never assumes ownership — adding a network requires typing `I OWN THIS`, and it warns on

@@ -363,7 +363,7 @@ The Pi 5 is the **brain**: always on, holding the server, scope gate, hash-chain
 This is the mechanism that makes the system **refuse out-of-scope action automatically.** It is fully
 implemented in [`server/scope-gate.js`](server/scope-gate.js), [`server/audit.js`](server/audit.js),
 and [`server/command-bus.js`](server/command-bus.js), and proven by
-[`server/selftest.js`](server/selftest.js) (`npm run check`, 57 checks).
+[`server/selftest.js`](server/selftest.js) (`npm run check`, 65 checks).
 
 ### 6.1 Owned-asset registry (single source of truth)
 
@@ -966,7 +966,7 @@ Effort reality: the code is done. The month is spent on **drivers, tokens, and u
 | **Flipper firmware** | CLI command surface drifts across OFW/Unleashed/RogueMaster; `ttyACM` enumeration changes. | Pin firmware, version-check on connect, udev symlink via `FLIPPER_PORT`. **Cadence: only upgrade firmware deliberately, then re-test the adapter.** |
 | **Certs / tokens / keys** | HA long-lived token revocation, WireGuard key rotation, TLS certs, SSH key expiry. Silent expiry = silent dead panel. | Track expiry dates; rotate on a schedule; alert before expiry. **Cadence: WireGuard/SSH keys rotated ~annually; watch token validity.** |
 | **Node / deps** | `express`/`ws`/`js-yaml` security advisories. | `npm audit` and dependency review. **Cadence: quarterly**, or on advisory. |
-| **The gate + audit core** | Does **not** rot — pure logic, no external API. This is by design: the legal boundary has no upstream that can deprecate it. | Re-run `npm run check` (57 checks: gate assertions, results confinement, sweep range, + the audit-chain verify) after **any** change to adapters or config. It is the regression net; keep it green. |
+| **The gate + audit core** | Does **not** rot — pure logic, no external API. This is by design: the legal boundary has no upstream that can deprecate it. | Re-run `npm run check` (65 checks: gate assertions, results confinement, sweep range, voice-vocab confinement, + the audit-chain verify) after **any** change to adapters or config. It is the regression net; keep it green. |
 
 **Standing rule:** treat `npm run check` as the pre-flight for every maintenance touch. The self-test proving the gate ALLOWS in-scope and DENIES out-of-scope is the one thing that must never go red — if a dependency bump or refactor breaks it, stop and fix the gate before anything else ships.
 
@@ -1027,7 +1027,7 @@ Tier 2, "Both" form factor.
 ```bash
 git clone <this repo> ctos && cd ctos
 npm install
-npm run check          # 57 checks: gate allow/deny, AMBER defaults, ERP cap, results confinement, sweep range, audit chain
+npm run check          # 65 checks: gate allow/deny, AMBER defaults, ERP cap, results confinement, sweep range, voice vocab, audit chain
 npm start              # → http://localhost:7050
 ```
 

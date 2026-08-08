@@ -8,6 +8,7 @@ import { authorize } from './scope-gate.js';
 import { loadConfig } from './config.js';
 import { record, verifyChain } from './audit.js';
 import { inCidr, parseCidr, intToIp, localAddressIn, parseWindowsArp, parseArpScan } from './adapters/network.js';
+import { buildVocab } from './voice.js';
 
 // Always test against the committed example fixtures, so this proof stays
 // stable regardless of the operator's private registry (npm run setup).
@@ -141,6 +142,50 @@ check('sweep never reaches broadcast', (r24.base + 254) >>> 0 < r24.last, true);
 // localAddressIn() gates the sweep on actually being attached to the network.
 check('not attached to an unrelated /24', localAddressIn('203.0.113.0/24'), null);
 check('no valid cidr → never attached', localAddressIn(undefined), null);
+
+// The voice layer is an input, not a capability. Its vocabulary must be a pure
+// projection of the registry — every target it can name must already be an owned
+// target, and a spoken command for it must survive authorize() identically to a
+// typed one. Prove both: the vocab only names owned things, and each named
+// target is authorized while an out-of-scope look-alike is denied.
+console.log('── voice = input, not capability (vocab ⊆ registry) ────────');
+const vocab = buildVocab(config);
+const regDevIds = new Set((config.registry.devices || []).map((d) => String(d.id).toLowerCase()));
+const haOwned = vocab.ha.every((x) => regDevIds.has(String(x.target).toLowerCase()));
+check('every HA voice target is an owned device', haOwned, true);
+const wolOwned = vocab.wol.every((x) => regDevIds.has(x.target.replace(/^mac:/, '')));
+check('every wake target is an owned MAC', wolOwned, true);
+check('vocab cidr equals the registry cidr', vocab.cidr, config.registry.networks?.[0]?.cidr || null);
+// AMBER targets are hidden unless the profile enables them (default: off).
+check('TX not offered while profile TX is off', vocab.tx, null);
+check('card emulation not offered while off', vocab.rfid, null);
+// The global amber_enabled kill-switch dominates: even with tx_allowed /
+// rfid_emulation_allowed both true, a globally-disabled AMBER offers nothing —
+// the vocab must never advertise a capability the gate would then deny.
+const vocabAmberKilled = buildVocab({
+  registry: config.registry,
+  jurisdiction: { ...config.jurisdiction, amber_enabled: false,
+    rf: { ...config.jurisdiction.rf, tx_allowed: true }, rfid_emulation_allowed: true },
+});
+check('kill-switch hides TX even if tx_allowed', vocabAmberKilled.tx, null);
+check('kill-switch hides card emulation', vocabAmberKilled.rfid, null);
+// ...and with AMBER enabled + capability flags on, the target IS offered.
+const vocabAmberOn = buildVocab({
+  registry: config.registry,
+  jurisdiction: { ...config.jurisdiction, amber_enabled: true,
+    rf: { ...config.jurisdiction.rf, tx_allowed: true }, rfid_emulation_allowed: true },
+});
+check('TX offered when amber on + tx_allowed', !!vocabAmberOn.tx, true);
+// A spoken command routes through the SAME gate. Prove a voice-shaped command
+// for an owned HA device is allowed, and for an unowned one is denied.
+if (vocab.ha[0]) {
+  expect('spoken toggle of owned device (via gate)',
+    { verb: 'control', class: 'homeassistant', target: vocab.ha[0].target, params: { action: 'toggle' } }, true);
+}
+expect('spoken toggle of UNOWNED device (via gate)',
+  { verb: 'control', class: 'homeassistant', target: 'ha:switch.someone_elses', params: { action: 'toggle' } }, false);
+expect('spoken "scan the neighbour" (via gate)',
+  { verb: 'scan', class: 'network', target: '203.0.113.0/24' }, false);
 
 console.log('── audit chain ─────────────────────────────────────────────');
 record({ actor: 'selftest', verb: 'scan', class: 'network', target: '192.168.1.0/24', result: 'allow' });

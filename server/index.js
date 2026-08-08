@@ -7,7 +7,7 @@ import path from 'node:path';
 import url from 'node:url';
 import { loadConfig } from './config.js';
 import { dispatch } from './command-bus.js';
-import { tail, verifyChain } from './audit.js';
+import { tail, verifyChain, record } from './audit.js';
 import * as network from './adapters/network.js';
 import * as ha from './adapters/homeassistant.js';
 import * as sdr from './adapters/sdr.js';
@@ -16,6 +16,7 @@ import * as hosts from './adapters/hosts.js';
 import * as telemetry from './adapters/telemetry.js';
 import * as store from './store.js';
 import * as watch from './watch.js';
+import { buildVocab } from './voice.js';
 import { vendorOf } from './oui.js';
 import { configured as notifyConfigured, providers as notifyProviders } from './notify.js';
 
@@ -78,6 +79,12 @@ app.get('/api/capabilities', (req, res) => {
   res.json(capabilityLegend());
 });
 
+// Voice vocabulary — the speakable targets, resolved from the registry only.
+// Read-only and capability-free: it names what you own so the browser grammar
+// can map a spoken label to a target. Every resolved target still goes through
+// the command bus and the scope gate; this endpoint grants nothing.
+app.get('/api/voice/vocab', (req, res) => res.json(buildVocab(config)));
+
 // ── defensive ctOS / history / presence / telemetry ────────────────────────
 app.get('/api/telemetry', async (req, res) => res.json(await telemetry.snapshot()));
 app.get('/api/history', (req, res) => res.json({
@@ -88,7 +95,14 @@ app.get('/api/watch', (req, res) => res.json({
   ...watch.status(), notify: { configured: notifyConfigured(), providers: notifyProviders() },
 }));
 app.post('/api/watch/sweep', async (req, res) => res.json(await watch.sweep(config, broadcast)));
-app.post('/api/history/purge', (req, res) => res.json(store.purge()));
+app.post('/api/history/purge', (req, res) => {
+  // Wiping the sighting history is destructive; record it in the hash-chained
+  // audit before it happens, so the deletion itself leaves a tamper-evident
+  // trace no matter who triggered it (a button, a voice command, or curl).
+  record({ actor: config.registry.owner || 'operator', verb: 'purge', class: 'history',
+    target: 'sightings', result: 'allow', reason: 'operator purged local sighting history' });
+  res.json(store.purge());
+});
 
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server, path: '/ws' });
